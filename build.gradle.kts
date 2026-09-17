@@ -3,7 +3,6 @@ buildscript {
     dependencies {
         classpath(Google.dagger.hilt.android.gradlePlugin)
         classpath("org.jetbrains.kotlin:kotlin-serialization:_")
-        classpath("org.jetbrains.kotlin.plugin.compose:compose-compiler:_")
     }
 }// Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
