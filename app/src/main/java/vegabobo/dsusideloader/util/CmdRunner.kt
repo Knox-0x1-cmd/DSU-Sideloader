@@ -2,9 +2,7 @@ package vegabobo.dsusideloader.util
 
 import com.topjohnwu.superuser.CallbackList
 import com.topjohnwu.superuser.Shell
-import java.io.BufferedReader
 import java.io.IOException
-import java.io.InputStreamReader
 
 object CmdRunner {
 
@@ -32,14 +30,20 @@ object CmdRunner {
     }
 
     private fun runCommand(cmd: String, onReceive: (String) -> Unit) {
-        process = ProcessBuilder("/bin/sh", "-c", cmd).start()
-        val bufferedReader = BufferedReader(InputStreamReader(process!!.inputStream))
+        val currentProcess = ProcessBuilder("/bin/sh", "-c", cmd)
+            .redirectErrorStream(true)
+            .start()
+        process = currentProcess
         try {
-            var line: String
-            while (bufferedReader.readLine().also { line = it ?: "" } != null) {
-                if (line.isNotEmpty()) onReceive(line)
+            currentProcess.inputStream.bufferedReader().useLines { lines ->
+                for (line in lines) {
+                    if (line.isNotEmpty()) onReceive(line)
+                }
             }
+            currentProcess.waitFor()
         } catch (_: IOException) {
+        } finally {
+            if (process === currentProcess) process = null
         }
     }
 

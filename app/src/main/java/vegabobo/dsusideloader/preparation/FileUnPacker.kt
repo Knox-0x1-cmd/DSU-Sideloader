@@ -35,7 +35,7 @@ class FileUnPacker(
         while (-1 != inputStr.read(buffer)
                 .also { n = it } && !installationJob.isCancelled
         ) {
-            readed += buffer.size
+            readed += n
             onReadedBuffer(readed)
             outputStr.write(buffer, 0, n)
         }

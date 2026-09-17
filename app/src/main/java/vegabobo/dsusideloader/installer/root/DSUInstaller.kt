@@ -8,6 +8,7 @@ import android.os.SharedMemory
 import android.util.Log
 import java.io.BufferedInputStream
 import java.io.InputStream
+import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.ByteBuffer
 import java.util.zip.ZipEntry
@@ -94,7 +95,7 @@ class DSUInstaller(
         if (!name.endsWith(".img")) {
             return false
         }
-        val partitionName = name.substringAfterLast(".")
+        val partitionName = name.substringBeforeLast(".")
         return isPartitionSupported(partitionName)
     }
 
@@ -194,16 +195,18 @@ class DSUInstaller(
 
     private fun installStreamingZipUpdate(inputStream: InputStream): Boolean {
         val zis = ZipInputStream(inputStream)
-        var entry: ZipEntry?
-        while (zis.nextEntry.also { entry = it } != null) {
-            val fileName = entry!!.name
-            if (shouldInstallEntry(fileName)) {
-                installImageFromAnEntry(entry!!, zis)
-            } else {
-                Log.d(tag, "$fileName installation is not supported, skip it.")
-            }
-            if (installationJob.isCancelled) {
-                break
+        zis.use {
+            var entry: ZipEntry?
+            while (zis.nextEntry.also { entry = it } != null) {
+                val fileName = entry!!.name
+                if (shouldInstallEntry(fileName)) {
+                    installImageFromAnEntry(entry!!, zis)
+                } else {
+                    Log.d(tag, "$fileName installation is not supported, skip it.")
+                }
+                if (installationJob.isCancelled) {
+                    break
+                }
             }
         }
         return true
@@ -249,7 +252,24 @@ class DSUInstaller(
 
             Type.URL -> {
                 val url = URL(dsuInstallation.uri.toString())
-                installStreamingZipUpdate(url.openStream())
+                if (url.protocol != "https") {
+                    onInstallationError(InstallationStep.ERROR, "Only https URLs are supported.")
+                    return
+                }
+                val connection = url.openConnection() as HttpURLConnection
+                try {
+                    connection.connectTimeout = 30_000
+                    connection.readTimeout = 60_000
+                    connection.instanceFollowRedirects = true
+                    val responseCode = connection.responseCode
+                    if (responseCode !in 200..299) {
+                        onInstallationError(InstallationStep.ERROR, "HTTP $responseCode")
+                        return
+                    }
+                    installStreamingZipUpdate(BufferedInputStream(connection.inputStream))
+                } finally {
+                    connection.disconnect()
+                }
             }
 
             else -> {}
