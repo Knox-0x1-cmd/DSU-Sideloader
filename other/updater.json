@@ -1,7 +1,7 @@
 {
   "identifier":"dsu_sideloader",
   "versionCode": 8,
-  "versionName": "2.02",
+  "versionName": "2.03",
   "apkUrl": "https://github.com/VegaBobo/DSU-Sideloader/releases/download/2.03/app-release.apk",
   "changelogUrl": "https://github.com/VegaBobo/DSU-Sideloader/releases/tag/2.03"
 }

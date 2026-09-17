@@ -3,13 +3,15 @@
 # unmount sdcard
 umount_sd=%UNMOUNT_SD
 if [[ $umount_sd == true ]]; then
-  SDCARD=$(sm list-volumes | grep -v null | grep public)
+  SDCARD=$(sm list-volumes | grep -v null | grep public | awk '{print $1}')
   if [[ $SDCARD == "" ]]; then
     echo "Unmount SD card option is enabled, but there is no sdcard detected, skipping.."
     umount_sd=false
   else
     echo "Unmount SD card option is enabled, sdcard will be ejected temporary, preventing DSU allocation on SD.."
-    sm unmount $SDCARD
+    for v in $SDCARD; do
+      sm unmount "$v"
+    done
   fi
 fi
 
@@ -23,5 +25,7 @@ echo "DSU installation activity has been started!"
 
 if [[ $umount_sd == true ]]; then
   echo "Remounting sdcard in 60 secs.."
-  nohup $(sleep 60 && sm mount $SDCARD) >/dev/null 2>&1 &
+  for v in $SDCARD; do
+    nohup sh -c 'sleep 60 && exec sm mount "$1"' sh "$v" >/dev/null 2>&1 &
+  done
 fi

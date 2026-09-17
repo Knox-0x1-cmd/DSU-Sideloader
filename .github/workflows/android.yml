@@ -6,28 +6,44 @@ on:
   pull_request:
     branches: [ "master" ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+
+    - name: Validate Gradle wrapper
+      uses: gradle/actions/wrapper-validation@v4
+
     - name: set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: gradle
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
-      
+
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@v4
+
     - name: Build with Gradle
       run: ./gradlew assembleMiniDebug
-      
+
     - name: Archive artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: outputs-apk-minidebug
         path: app/build/outputs/apk/miniDebug
+        if-no-files-found: error
+        retention-days: 7
