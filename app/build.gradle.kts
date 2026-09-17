@@ -12,6 +12,7 @@ plugins {
     id("com.mikepenz.aboutlibraries.plugin")
     id("kotlinx-serialization")
     id("org.jmailen.kotlinter")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -20,7 +21,7 @@ android {
     val packageName: String by rootProject.extra
 
     namespace = packageName
-    compileSdk = 33
+    compileSdk = 36
 
     defaultConfig {
         this.applicationId = packageName
@@ -28,7 +29,7 @@ android {
         this.versionName = versionName
 
         minSdk = 29
-        targetSdk = 33
+        targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
@@ -96,9 +97,6 @@ android {
         aidl = true
         buildConfig = true
         compose = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.6"
     }
     packaging {
         resources {
