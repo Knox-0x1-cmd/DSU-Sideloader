@@ -88,7 +88,9 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "17"
+        compilerOptions {
+            jvmTarget.set("17")
+        }
     }
     kotlin {
         jvmToolchain(17)
@@ -157,9 +159,9 @@ dependencies {
 
 tasks {
     "preBuild" {
-        dependsOn(lintKotlin)
+        dependsOn("ktlintCheck")
     }
-    "lintKotlin" {
-        dependsOn(formatKotlin)
+    "ktlintCheck" {
+        dependsOn("ktlintFormat")
     }
 }
