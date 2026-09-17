@@ -146,10 +146,6 @@ dependencies {
     implementation("com.github.topjohnwu.libsu:service:_")
 
     implementation("org.tukaani:xz:_")
-    implementation("org.apache.commons:commons-compress:_") {
-        exclude(group = "commons-io", module = "commons-io")
-        exclude(group = "org.apache.commons", module = "commons-lang3")
-    }
 
     implementation("com.mikepenz:aboutlibraries-core:_")
 
