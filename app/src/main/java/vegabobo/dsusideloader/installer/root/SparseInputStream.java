@@ -196,6 +196,9 @@ public class SparseInputStream extends InputStream {
         if (!mIsSparse) {
             return -1;
         }
-        return Integer.toUnsignedLong(mTotalBlocks) * mBlockSize;
+        // mTotalBlocks is already guarded to be non-negative (and within int range)
+        // by the header sanity check in the constructor, so a plain multiplication
+        // yields the unsigned block count as a long.
+        return mTotalBlocks * mBlockSize;
     }
 }
