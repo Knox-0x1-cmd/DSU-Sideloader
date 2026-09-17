@@ -88,7 +88,6 @@ class MainActivity : ComponentActivity(), Shizuku.OnRequestPermissionResultListe
         if (grantResult == PackageManager.PERMISSION_GRANTED && requestCode == SHIZUKU_REQUEST_CODE) {
             bindShizuku()
         }
-        Shizuku.removeRequestPermissionResultListener(REQUEST_PERMISSION_RESULT_LISTENER)
     }
 
     fun bindShizuku() {
@@ -166,6 +165,8 @@ class MainActivity : ComponentActivity(), Shizuku.OnRequestPermissionResultListe
                 removeShizukuListeners()
                 Shizuku.unbindUserService(userServiceArgs, PrivilegedProvider.connection, true)
             }
+
+            OperationMode.ADB -> removeShizukuListeners()
 
             else -> {}
         }

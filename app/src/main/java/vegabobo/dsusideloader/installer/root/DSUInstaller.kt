@@ -119,6 +119,9 @@ class DSUInstaller(
         CoroutineScope(Dispatchers.IO + job).launch {
             try {
                 createNewPartition(partition, partitionSize, readOnly)
+            } catch (e: Exception) {
+                Log.e(tag, "Failed to create $partition partition", e)
+                onInstallationError(InstallationStep.ERROR_CREATE_PARTITION, partition)
             } finally {
                 job.complete()
             }
@@ -160,7 +163,9 @@ class DSUInstaller(
         )
         val partitionSize = if (sis.unsparseSize != -1L) sis.unsparseSize else uncompressedSize
         onCreatePartition(partition)
-        createNewPartition(partition, partitionSize, readOnly)
+        if (!createNewPartition(partition, partitionSize, readOnly)) {
+            return
+        }
         onInstallationStepUpdate(InstallationStep.INSTALLING_ROOTED)
         SharedMemory.create("dsu_buffer_$partition", Constants.SHARED_MEM_SIZE)
             .use { sharedMemory ->
@@ -241,7 +246,9 @@ class DSUInstaller(
                         spooledSize += count
                     }
                 }
-                installImage(partitionName, spooledSize, FileInputStream(tempFile))
+                FileInputStream(tempFile).use {
+                    installImage(partitionName, spooledSize, it)
+                }
             } finally {
                 tempFile.delete()
             }
@@ -327,11 +334,13 @@ class DSUInstaller(
     }
 
     private fun installImage(partitionName: String, uncompressedSize: Long, uri: Uri) {
-        installImage(
-            partitionName,
-            uncompressedSize,
-            openInputStream(uri),
-        )
+        openInputStream(uri).use {
+            installImage(
+                partitionName,
+                uncompressedSize,
+                it,
+            )
+        }
         if (installationJob.isCancelled) {
             remove()
         }
@@ -341,7 +350,7 @@ class DSUInstaller(
         return application.contentResolver.openInputStream(uri)!!
     }
 
-    fun createNewPartition(partition: String, partitionSize: Long, readOnly: Boolean) {
+    fun createNewPartition(partition: String, partitionSize: Long, readOnly: Boolean): Boolean {
         val result = createPartition(partition, partitionSize, readOnly)
         if (result != IGsiService.INSTALL_OK) {
             Log.d(
@@ -350,7 +359,9 @@ class DSUInstaller(
             )
             installationJob.cancel()
             onInstallationError(InstallationStep.ERROR_CREATE_PARTITION, partition)
+            return false
         }
+        return true
     }
 
     override fun invoke() {

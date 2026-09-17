@@ -2,6 +2,7 @@ package vegabobo.dsusideloader.preparation
 
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
+import java.io.Closeable
 import java.io.FilterInputStream
 import java.io.InputStream
 import java.io.OutputStream
@@ -69,29 +70,46 @@ class FileUnPacker(
     }
 
     fun pack(): Pair<Uri, Long> {
-        copy(inputStream, GZIPOutputStream(outputStream)) {
-            updateProgress(inputFileSize, it)
+        try {
+            copy(inputStream, GZIPOutputStream(outputStream)) {
+                updateProgress(inputFileSize, it)
+            }
+        } finally {
+            closeQuietly(inputStream)
+            closeQuietly(outputStream)
         }
         val fileLength = storageManager.getFilesizeFromUri(finalFile.uri)
         return Pair(finalFile.uri, fileLength)
     }
 
     fun unpack(): Pair<Uri, Long> {
-        val countingInputStream = CountingInputStream(inputStream)
-        val archiveInputStream =
-            with(storageManager.getFilenameFromUri(inputFile)) {
-                when {
-                    endsWith("xz") -> XZInputStream(countingInputStream)
-                    endsWith("gz") -> GZIPInputStream(countingInputStream)
-                    endsWith("gzip") -> GZIPInputStream(countingInputStream)
-                    else -> throw Exception("File type not supported")
+        try {
+            val countingInputStream = CountingInputStream(inputStream)
+            val archiveInputStream =
+                with(storageManager.getFilenameFromUri(inputFile)) {
+                    when {
+                        endsWith("xz") -> XZInputStream(countingInputStream)
+                        endsWith("gz") -> GZIPInputStream(countingInputStream)
+                        endsWith("gzip") -> GZIPInputStream(countingInputStream)
+                        else -> throw Exception("File type not supported")
+                    }
                 }
+            copy(archiveInputStream, outputStream) {
+                updateProgress(inputFileSize, countingInputStream.count)
             }
-        copy(archiveInputStream, outputStream) {
-            updateProgress(inputFileSize, countingInputStream.count)
+        } finally {
+            closeQuietly(inputStream)
+            closeQuietly(outputStream)
         }
         val fileLength = storageManager.getFilesizeFromUri(finalFile.uri)
         return Pair(finalFile.uri, fileLength)
+    }
+
+    private fun closeQuietly(stream: Closeable) {
+        try {
+            stream.close()
+        } catch (_: Exception) {
+        }
     }
 
     private fun updateProgress(fileSize: Long, readed: Long) {

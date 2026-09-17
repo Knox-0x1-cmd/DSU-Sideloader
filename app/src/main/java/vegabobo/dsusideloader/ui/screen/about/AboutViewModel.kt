@@ -10,6 +10,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
+import java.net.HttpURLConnection
 import java.net.URL
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -90,36 +92,42 @@ class AboutViewModel @Inject constructor(
         if (uiState.value.updaterCardState.isDownloading) {
             return
         }
+        if (!response.apkUrl.startsWith("https://")) {
+            Log.e(tag, "Refusing to download update from non-https URL: ${response.apkUrl}")
+            return
+        }
         updateUpdaterCard { it.copy(isDownloading = true) }
         viewModelScope.launch(Dispatchers.IO) {
             val finalFile = File(application.filesDir.path + "/update.apk")
-            val length = try {
-                URL(response.apkUrl).openConnection().contentLengthLong
+            try {
+                val connection = URL(response.apkUrl).openConnection() as HttpURLConnection
+                connection.connectTimeout = 30_000
+                connection.readTimeout = 60_000
+                connection.instanceFollowRedirects = true
+                val length = connection.contentLengthLong
+                connection.inputStream.use { input ->
+                    if (connection.url.protocol != "https") {
+                        throw IOException("Refusing non-https redirect: ${connection.url}")
+                    }
+                    FileOutputStream(finalFile).use { output ->
+                        val buffer = ByteArray(8 * 1024)
+                        var n: Int
+                        var readed: Long = 0
+                        while (-1 != input.read(buffer)
+                                .also { n = it }
+                        ) {
+                            readed += n
+                            output.write(buffer, 0, n)
+                            val progress = if (length > 0) readed.toFloat() / length.toFloat() else 0F
+                            updateUpdaterCard { it.copy(progressBar = progress) }
+                        }
+                    }
+                }
             } catch (e: Exception) {
+                Log.e(tag, "Failed to download update", e)
                 updateUpdaterCard { it.copy(isDownloading = false) }
                 return@launch
             }
-            val input = try {
-                URL(response.apkUrl).openStream()
-            } catch (e: Exception) {
-                updateUpdaterCard { it.copy(isDownloading = false) }
-                return@launch
-            }
-            val output = FileOutputStream(finalFile)
-
-            val buffer = ByteArray(8 * 1024)
-            var n: Int
-            var readed: Long = 0
-            while (-1 != input.read(buffer)
-                    .also { n = it }
-            ) {
-                readed += n
-                output.write(buffer, 0, n)
-                val progress = if (length > 0) readed.toFloat() / length.toFloat() else 0F
-                updateUpdaterCard { it.copy(progressBar = progress) }
-            }
-            input.close()
-            output.close()
 
             updateUpdaterCard { it.copy(isDownloading = false) }
             val apkUri = FileProvider.getUriForFile(

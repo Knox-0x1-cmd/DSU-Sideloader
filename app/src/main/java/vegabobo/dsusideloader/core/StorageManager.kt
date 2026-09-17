@@ -120,9 +120,7 @@ class StorageManager(
 
     fun writeStringToFile(content: String, filename: String): String {
         val file = createDocumentFile(filename)
-        val outputStream = openOutputStream(file.uri)
-        outputStream.write(content.toByteArray())
-        outputStream.close()
+        openOutputStream(file.uri).use { it.write(content.toByteArray()) }
         return FilenameUtils.getFilePath(file.uri, false).replace("file://", "")
     }
 
@@ -139,9 +137,7 @@ class StorageManager(
     }
 
     fun writeStringToUri(content: String, uri: Uri): String {
-        val outputStream = appContext.contentResolver.openOutputStream(uri)!!
-        outputStream.write(content.toByteArray())
-        outputStream.close()
+        appContext.contentResolver.openOutputStream(uri)!!.use { it.write(content.toByteArray()) }
         return FilenameUtils.getFilePath(uri, false).replace("file://", "")
     }
 
