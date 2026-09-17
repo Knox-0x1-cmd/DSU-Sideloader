@@ -14,7 +14,6 @@ import java.io.OutputStream
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.apache.commons.compress.utils.IOUtils
 import vegabobo.dsusideloader.preferences.AppPrefs
 import vegabobo.dsusideloader.util.DataStoreUtils
 import vegabobo.dsusideloader.util.FilenameUtils
@@ -103,7 +102,14 @@ class StorageManager(
         val inputStream = openInputStream(inputFile)
         val outputStream = openOutputStream(clone.uri)
         try {
-            IOUtils.copy(inputStream, outputStream)
+            val buffer = ByteArray(8 * 1024)
+            while (true) {
+                val readBytes = inputStream.read(buffer)
+                if (readBytes == -1) {
+                    break
+                }
+                outputStream.write(buffer, 0, readBytes)
+            }
             outputStream.flush()
         } finally {
             inputStream.close()
