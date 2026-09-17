@@ -17,39 +17,37 @@ object PrivilegedProvider {
         onFail: () -> Unit = {},
         onConnected: suspend IPrivilegedService.() -> Unit,
     ) {
-        fun service() = this.connection.SERVICE!!
         CoroutineScope(Dispatchers.IO).launch {
-            if (isConnected()) {
-                onConnected(service())
-                return@launch
-            }
-            var timeout = 0
-            while (!isConnected()) {
-                timeout += 1000
-                if (timeout > 20000) {
-                    Log.e(tag, "Service unavailable.")
-                    onFail()
-                    return@launch
+            if (connection.SERVICE == null) {
+                var timeout = 0
+                while (connection.SERVICE == null) {
+                    timeout += 1000
+                    if (timeout > 20000) {
+                        Log.e(tag, "Service unavailable.")
+                        onFail()
+                        return@launch
+                    }
+                    delay(1000)
+                    Log.d(tag, "Service unavailable, checking again in 1s.. [${timeout / 1000}s/20s]")
                 }
-                delay(1000)
-                Log.d(tag, "Service unavailable, checking again in 1s.. [${timeout / 1000}s/20s]")
             }
-            Log.d(tag, "IPrivilegedService available, uid: ${service().uid}")
-            onConnected(service())
+            val service = connection.SERVICE ?: return@launch
+            Log.d(tag, "IPrivilegedService available, uid: ${service.uid}")
+            onConnected(service)
         }
     }
 
     // Blocking
     fun getService(): IPrivilegedService {
         var timeout = 0
-        while (!isConnected()) {
+        while (connection.SERVICE == null) {
             timeout += 1000
             if (timeout > 20000) {
                 throw Exception("Service unavailable.")
             }
             Thread.sleep(1000)
         }
-        return this.connection.SERVICE!!
+        return connection.SERVICE ?: throw Exception("Service unavailable.")
     }
 
     // Blocking

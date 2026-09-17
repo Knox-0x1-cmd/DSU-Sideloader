@@ -161,7 +161,7 @@ class HomeViewModel @Inject constructor(
             _uiState.update { it.copy(shouldKeepScreenOn = shouldKeepScreenOn) }
 
             disabledStorageCheck = readBoolPref(AppPrefs.DISABLE_STORAGE_CHECK)
-            Log.d(tag, "disabledStorageCheck: $shouldKeepScreenOn")
+            Log.d(tag, "disabledStorageCheck: $disabledStorageCheck")
         }
     }
 
@@ -209,15 +209,20 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO + installationJob) {
             session.preferences.isUnmountSdCard = readBoolPref(AppPrefs.UMOUNT_SD)
             session.preferences.useBuiltinInstaller = readBoolPref(AppPrefs.USE_BUILTIN_INSTALLER)
-            Preparation(
-                storageManager = storageManager,
-                session = session,
-                job = installationJob,
-                onStepUpdate = this@HomeViewModel::onStepUpdate,
-                onPreparationProgressUpdate = this@HomeViewModel::onPreparationProgressUpdate,
-                onCanceled = this@HomeViewModel::onClickCancelInstallationButton,
-                onPreparationFinished = this@HomeViewModel::onPreparationFinished,
-            ).invoke()
+            try {
+                Preparation(
+                    storageManager = storageManager,
+                    session = session,
+                    job = installationJob,
+                    onStepUpdate = this@HomeViewModel::onStepUpdate,
+                    onPreparationProgressUpdate = this@HomeViewModel::onPreparationProgressUpdate,
+                    onCanceled = this@HomeViewModel::onClickCancelInstallationButton,
+                    onPreparationFinished = this@HomeViewModel::onPreparationFinished,
+                ).invoke()
+            } catch (e: Exception) {
+                Log.e(tag, "DSU preparation/installation failed", e)
+                onInstallationError(InstallationStep.ERROR, e.message ?: "Failed to prepare the DSU image.")
+            }
         }
     }
 
@@ -254,17 +259,22 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun startDSUInstallation() {
-        DSUInstaller(
-            application = application,
-            userdataSize = session.userSelection.userSelectedUserdata,
-            dsuInstallation = session.dsuInstallation,
-            installationJob = installationJob,
-            onInstallationError = this::onInstallationError,
-            onInstallationProgressUpdate = this::onInstallationProgressUpdate,
-            onCreatePartition = this::onCreatePartition,
-            onInstallationStepUpdate = this::onStepUpdate,
-            onInstallationSuccess = this::onRootInstallationSuccess,
-        ).invoke()
+        try {
+            DSUInstaller(
+                application = application,
+                userdataSize = session.userSelection.userSelectedUserdata,
+                dsuInstallation = session.dsuInstallation,
+                installationJob = installationJob,
+                onInstallationError = this::onInstallationError,
+                onInstallationProgressUpdate = this::onInstallationProgressUpdate,
+                onCreatePartition = this::onCreatePartition,
+                onInstallationStepUpdate = this::onStepUpdate,
+                onInstallationSuccess = this::onRootInstallationSuccess,
+            ).invoke()
+        } catch (e: Exception) {
+            Log.e(tag, "DSU installation failed", e)
+            onInstallationError(InstallationStep.ERROR, e.message ?: "DSU installation failed.")
+        }
     }
 
     private fun startPrivilegedInstallation() {
@@ -299,7 +309,7 @@ class HomeViewModel @Inject constructor(
             "SDK: Android ${Build.VERSION.RELEASE} (${Build.VERSION.SDK_INT})\n" +
             "$session\n" +
             "Package: ${BuildConfig.APPLICATION_ID}\n" +
-            "Version: ${BuildConfig.VERSION_NAME} - ${BuildConfig.VERSION_CODE} (${BuildConfig.BUILD_TYPE}})\n" +
+            "Version: ${BuildConfig.VERSION_NAME} - ${BuildConfig.VERSION_CODE} (${BuildConfig.BUILD_TYPE})\n" +
             "checkDynamicPartitions: $checkDynamicPartitions\n" +
             "checkUnavaiableStorage: $checkUnavaiableStorage\n" +
             "checkReadLogsPermission: $checkReadLogsPermission\n" +
@@ -393,12 +403,13 @@ class HomeViewModel @Inject constructor(
     fun updateUserdataSize(input: String) {
         val selectedSize = FilenameUtils.getDigits(input)
         val sizeWithSuffix = FilenameUtils.appendToDigitsToString(input, "GB")
+        val selectedSizeInt = selectedSize.toIntOrNull() ?: Int.MAX_VALUE
         Log.d(
             tag,
             "disabledStorageCheck: $disabledStorageCheck, selectedSize: $selectedSize, maximumAllowedForAllocation: $maximumAllowedForAllocation",
         )
 
-        if (!disabledStorageCheck && selectedSize.isNotEmpty() && selectedSize.toInt() > maximumAllowedForAllocation) {
+        if (!disabledStorageCheck && selectedSize.isNotEmpty() && selectedSizeInt > maximumAllowedForAllocation) {
             val fixedSize =
                 FilenameUtils.appendToDigitsToString("$maximumAllowedForAllocation", "GB")
             updateUserdataCard {

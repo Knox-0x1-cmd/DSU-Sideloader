@@ -7,6 +7,9 @@ import android.os.ParcelFileDescriptor
 import android.os.SharedMemory
 import android.util.Log
 import java.io.BufferedInputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -114,8 +117,11 @@ class DSUInstaller(
     ) {
         val job = Job()
         CoroutineScope(Dispatchers.IO + job).launch {
-            createNewPartition(partition, partitionSize, readOnly)
-            job.complete()
+            try {
+                createNewPartition(partition, partitionSize, readOnly)
+            } finally {
+                job.complete()
+            }
         }
         publishProgress(0L, partitionSize, partition)
         var prevInstalledSize = 0L
@@ -170,6 +176,7 @@ class DSUInstaller(
                             .also { numBytesRead = it }
                     ) {
                         if (installationJob.isCancelled) {
+                            closePartition()
                             return
                         }
                         buffer!!.position(0)
@@ -216,7 +223,30 @@ class DSUInstaller(
         val fileName = entry.name
         Log.d(tag, "Installing: $fileName")
         val partitionName = fileName.substring(0, fileName.length - 4)
-        val uncompressedSize = entry.size
+        var uncompressedSize = entry.size
+        if (uncompressedSize <= 0) {
+            // Zip entries using data descriptors report size -1, so the raw (non-sparse)
+            // image size cannot be known upfront. Spool it to a temp file to measure it.
+            val tempFile = File.createTempFile(partitionName, ".img", application.cacheDir)
+            var spooledSize = 0L
+            try {
+                FileOutputStream(tempFile).use { output ->
+                    val buffer = ByteArray(8 * 1024)
+                    var count: Int
+                    while (inputStream.read(buffer).also { count = it } != -1) {
+                        if (installationJob.isCancelled) {
+                            break
+                        }
+                        output.write(buffer, 0, count)
+                        spooledSize += count
+                    }
+                }
+                installImage(partitionName, spooledSize, FileInputStream(tempFile))
+            } finally {
+                tempFile.delete()
+            }
+            return
+        }
         installImage(partitionName, uncompressedSize, inputStream)
     }
 
@@ -262,6 +292,10 @@ class DSUInstaller(
                     connection.readTimeout = 60_000
                     connection.instanceFollowRedirects = true
                     val responseCode = connection.responseCode
+                    if (connection.url.protocol != "https") {
+                        onInstallationError(InstallationStep.ERROR, "Only https URLs are supported.")
+                        return
+                    }
                     if (responseCode !in 200..299) {
                         onInstallationError(InstallationStep.ERROR, "HTTP $responseCode")
                         return

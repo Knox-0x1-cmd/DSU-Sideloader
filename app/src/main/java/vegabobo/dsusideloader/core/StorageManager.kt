@@ -100,7 +100,15 @@ class StorageManager(
 
     private fun copyFileToSafFolder(inputFile: Uri): Uri {
         val clone: DocumentFile = createDocumentFile(getFilenameFromUri(inputFile))
-        IOUtils.copy(openInputStream(inputFile), openOutputStream(clone.uri))
+        val inputStream = openInputStream(inputFile)
+        val outputStream = openOutputStream(clone.uri)
+        try {
+            IOUtils.copy(inputStream, outputStream)
+            outputStream.flush()
+        } finally {
+            inputStream.close()
+            outputStream.close()
+        }
         return clone.uri
     }
 
