@@ -16,7 +16,7 @@ class DevicePropUtils {
          */
         fun getGsidBinaryAllowedPerc(): Float {
             val minAllowed = getSystemProperty("ro.vegabobo.dsusideloader.gsid_min_alloc")
-            return if (minAllowed.isNotEmpty()) minAllowed.toFloat() else 0.40F
+            return if (minAllowed.isNotEmpty()) minAllowed.toFloatOrNull() ?: 0.40F else 0.40F
         }
 
         fun hasDynamicPartitions(): Boolean {

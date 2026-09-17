@@ -2,6 +2,7 @@ package vegabobo.dsusideloader.installer.privileged
 
 import android.util.Log
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.jvm.Volatile
 import vegabobo.dsusideloader.preparation.InstallationStep
 import vegabobo.dsusideloader.util.CmdRunner
 
@@ -14,6 +15,7 @@ class LogcatDiagnostic(
 ) {
 
     private val tag = this.javaClass.simpleName
+    @Volatile
     var logs = ""
     val isLogging = AtomicBoolean(false)
     var shouldLogEverything = false

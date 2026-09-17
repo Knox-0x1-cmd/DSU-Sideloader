@@ -69,7 +69,12 @@ class AboutViewModel @Inject constructor(
                 updateUpdaterCard { it.copy(updateStatus = UpdateStatus.NO_UPDATE_FOUND) }
                 return@launch
             }
-            response = Json.decodeFromString(UpdaterResponse.serializer(), apiResponse)
+            response = try {
+                Json.decodeFromString(UpdaterResponse.serializer(), apiResponse)
+            } catch (e: Exception) {
+                updateUpdaterCard { it.copy(updateStatus = UpdateStatus.NO_UPDATE_FOUND) }
+                return@launch
+            }
             updateUpdaterCard { it.copy(updateVersion = response.versionName) }
             if (response.versionCode > BuildConfig.VERSION_CODE) {
                 updateUpdaterCard { it.copy(updateStatus = UpdateStatus.UPDATE_FOUND) }
@@ -108,9 +113,10 @@ class AboutViewModel @Inject constructor(
             while (-1 != input.read(buffer)
                     .also { n = it }
             ) {
-                readed += buffer.size
+                readed += n
                 output.write(buffer, 0, n)
-                updateUpdaterCard { it.copy(progressBar = readed.toFloat() / length.toFloat()) }
+                val progress = if (length > 0) readed.toFloat() / length.toFloat() else 0F
+                updateUpdaterCard { it.copy(progressBar = progress) }
             }
             input.close()
             output.close()

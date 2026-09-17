@@ -20,21 +20,17 @@ class UserSelection(
     fun getUserDataSizeAsGB(): String = "${(this.userSelectedUserdata / 1024L / 1024L / 1024L)}"
 
     fun setUserDataSize(size: String) {
+        val sizeInBytes = FilenameUtils.getDigits(size).toLongOrNull()
         userSelectedUserdata =
-            if (size.isNotEmpty()) {
-                (FilenameUtils.getDigits(size).toLong()) * 1024L * 1024L * 1024L
+            if (sizeInBytes != null) {
+                sizeInBytes * 1024L * 1024L * 1024L
             } else {
                 DSUConstants.DEFAULT_USERDATA
             }
     }
 
     fun setImageSize(size: String) {
-        userSelectedImageSize =
-            if (size.isNotEmpty()) {
-                FilenameUtils.getDigits(size).toLong()
-            } else {
-                DSUConstants.DEFAULT_IMAGE_SIZE
-            }
+        userSelectedImageSize = FilenameUtils.getDigits(size).toLongOrNull() ?: DSUConstants.DEFAULT_IMAGE_SIZE
     }
 
     fun isCustomImageSize(): Boolean {

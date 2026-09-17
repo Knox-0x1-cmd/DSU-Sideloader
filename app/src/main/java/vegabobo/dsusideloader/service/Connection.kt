@@ -9,9 +9,7 @@ class Connection : ServiceConnection {
 
     var SERVICE: IPrivilegedService? = null
     fun set(service: IPrivilegedService?) {
-        if (SERVICE == null) {
-            SERVICE = service
-        }
+        SERVICE = service
     }
 
     override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
