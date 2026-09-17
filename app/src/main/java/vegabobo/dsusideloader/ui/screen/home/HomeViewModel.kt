@@ -57,6 +57,9 @@ class HomeViewModel @Inject constructor(
     var disabledStorageCheck = false
 
     var installationJob: Job = Job()
+
+    @Volatile
+    private var installationRunning = false
     var logger: LogcatDiagnostic? = null
 
     private val allocPercentage = DevicePropUtils.getGsidBinaryAllowedPerc()
@@ -203,25 +206,34 @@ class HomeViewModel @Inject constructor(
     }
 
     fun onConfirmInstallationSheet() {
+        if (installationRunning) {
+            Log.w(tag, "Installation already in progress, ignoring duplicate request")
+            return
+        }
+        installationRunning = true
         dismissSheet()
         updateInstallationCard { it.copy(installationStep = InstallationStep.PROCESSING) }
         installationJob = Job()
         viewModelScope.launch(Dispatchers.IO + installationJob) {
-            session.preferences.isUnmountSdCard = readBoolPref(AppPrefs.UMOUNT_SD)
-            session.preferences.useBuiltinInstaller = readBoolPref(AppPrefs.USE_BUILTIN_INSTALLER)
             try {
-                Preparation(
-                    storageManager = storageManager,
-                    session = session,
-                    job = installationJob,
-                    onStepUpdate = this@HomeViewModel::onStepUpdate,
-                    onPreparationProgressUpdate = this@HomeViewModel::onPreparationProgressUpdate,
-                    onCanceled = this@HomeViewModel::onClickCancelInstallationButton,
-                    onPreparationFinished = this@HomeViewModel::onPreparationFinished,
-                ).invoke()
-            } catch (e: Exception) {
-                Log.e(tag, "DSU preparation/installation failed", e)
-                onInstallationError(InstallationStep.ERROR, e.message ?: "Failed to prepare the DSU image.")
+                session.preferences.isUnmountSdCard = readBoolPref(AppPrefs.UMOUNT_SD)
+                session.preferences.useBuiltinInstaller = readBoolPref(AppPrefs.USE_BUILTIN_INSTALLER)
+                try {
+                    Preparation(
+                        storageManager = storageManager,
+                        session = session,
+                        job = installationJob,
+                        onStepUpdate = this@HomeViewModel::onStepUpdate,
+                        onPreparationProgressUpdate = this@HomeViewModel::onPreparationProgressUpdate,
+                        onCanceled = this@HomeViewModel::onClickCancelInstallationButton,
+                        onPreparationFinished = this@HomeViewModel::onPreparationFinished,
+                    ).invoke()
+                } catch (e: Exception) {
+                    Log.e(tag, "DSU preparation/installation failed", e)
+                    onInstallationError(InstallationStep.ERROR, e.message ?: "Failed to prepare the DSU image.")
+                }
+            } finally {
+                installationRunning = false
             }
         }
     }
@@ -247,6 +259,27 @@ class HomeViewModel @Inject constructor(
         }
 
         startPrivilegedInstallation()
+    }
+
+    /**
+     * Runs the installation on the IO dispatcher. Installation performs blocking
+     * binder/shell calls (and [startDSUInstallation] polls with runBlocking), so it
+     * must never run on the main thread.
+     */
+    private fun launchInstallation(block: suspend () -> Unit = { startInstallation() }) {
+        if (installationRunning) {
+            Log.w(tag, "Installation already in progress, ignoring duplicate request")
+            return
+        }
+        installationRunning = true
+        installationJob = Job()
+        viewModelScope.launch(Dispatchers.IO + installationJob) {
+            try {
+                block()
+            } finally {
+                installationRunning = false
+            }
+        }
     }
 
     private fun setupAdbInstallation() {
@@ -325,6 +358,7 @@ class HomeViewModel @Inject constructor(
 
     fun onClickCancelInstallationButton() {
         resetInstallationCard()
+        installationRunning = false
         if (session.getOperationMode() != OperationMode.ADB &&
             logger != null && logger!!.isLogging.get()
         ) {
@@ -354,9 +388,11 @@ class HomeViewModel @Inject constructor(
 
     fun onClickDiscardGsiAndStartInstallation() {
         updateInstallationCard { it.copy(installationStep = InstallationStep.PROCESSING) }
-        PrivilegedProvider.run {
-            remove()
-            forceStopPackage("com.android.dynsystem")
+        launchInstallation {
+            PrivilegedProvider.run {
+                remove()
+                forceStopPackage("com.android.dynsystem")
+            }
             startDSUInstallation()
         }
     }
@@ -373,18 +409,18 @@ class HomeViewModel @Inject constructor(
 
     fun onClickRetryInstallation() {
         updateInstallationCard { it.copy(installationStep = InstallationStep.PROCESSING) }
-        startInstallation()
+        launchInstallation()
     }
 
     fun onClickUnmountSdCardAndRetry() {
         updateInstallationCard { it.copy(installationStep = InstallationStep.PROCESSING) }
         session.preferences.isUnmountSdCard = true
-        startInstallation()
+        launchInstallation()
     }
 
     fun onClickSetSeLinuxPermissive() {
         updateInstallationCard { it.copy(installationStep = InstallationStep.PROCESSING) }
-        viewModelScope.launch {
+        launchInstallation {
             Shell.cmd("setenforce 0").exec()
             delay(5000)
             startInstallation()
@@ -452,10 +488,14 @@ class HomeViewModel @Inject constructor(
     //
 
     fun takeUriPermission(uri: Uri) {
-        application.contentResolver.takePersistableUriPermission(
-            uri,
-            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
-        )
+        try {
+            application.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+            )
+        } catch (e: SecurityException) {
+            Log.e(tag, "Failed to take persistable permission for $uri", e)
+        }
         viewModelScope.launch {
             if (storageManager.arePermissionsGrantedToFolder(uri.toString())) {
                 updateStringPref(AppPrefs.SAF_PATH, uri.toString()) { initialChecks() }

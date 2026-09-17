@@ -134,21 +134,22 @@ class Preparation(
         // If the .gz is smaller than 3gb, then try returning the image size
         // by reading the lasts four bytes.
         if (fileSize < three_gb) {
-            val inputStream = storageManager.openInputStream(uri)
-            var skipped = 0L
-            while (skipped < fileSize - 4) {
-                val n = inputStream.skip(fileSize - 4 - skipped)
-                if (n <= 0) break
-                skipped += n
-            }
-            val bytes = ByteArray(4)
-            inputStream.read(bytes)
-            bytes.reverse() // Little endian -> Big endian
-            val imageSize = BigInteger(1, bytes).toLong()
-            // If the image size is LOWER than the compressed file, then
-            // the image size must be wrong.
-            if (imageSize > fileSize) {
-                return Pair(uri, imageSize)
+            storageManager.openInputStream(uri).use { inputStream ->
+                var skipped = 0L
+                while (skipped < fileSize - 4) {
+                    val n = inputStream.skip(fileSize - 4 - skipped)
+                    if (n <= 0) break
+                    skipped += n
+                }
+                val bytes = ByteArray(4)
+                inputStream.read(bytes)
+                bytes.reverse() // Little endian -> Big endian
+                val imageSize = BigInteger(1, bytes).toLong()
+                // If the image size is LOWER than the compressed file, then
+                // the image size must be wrong.
+                if (imageSize > fileSize) {
+                    return Pair(uri, imageSize)
+                }
             }
         }
         // If the .gz is bigger than 3gb or the fast-way returns a

@@ -79,7 +79,12 @@ fun AboutScreen(
             onClickImage = { aboutViewModel.onClickImage() },
             onClickCheckUpdates = { aboutViewModel.onClickCheckUpdates() },
             onClickDownloadUpdate = { aboutViewModel.onClickDownloadUpdate() },
-            onClickViewChangelog = { uriHandler.openUri(aboutViewModel.response.changelogUrl) },
+            onClickViewChangelog = {
+                val changelogUrl = aboutViewModel.response.changelogUrl
+                if (changelogUrl.startsWith("https://")) {
+                    uriHandler.openUri(changelogUrl)
+                }
+            },
         )
         Title(
             stringResource(id = R.string.application),

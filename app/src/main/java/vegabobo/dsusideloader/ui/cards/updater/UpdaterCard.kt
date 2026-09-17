@@ -18,8 +18,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -86,9 +84,7 @@ fun UpdaterCard(
                         )
                     }
 
-                    val selected = remember { mutableStateOf(false) }
-                    val scale = animateFloatAsState(if (selected.value) 0.75f else 1f)
-                    selected.value = isDownloading()
+                    val scale = animateFloatAsState(if (isDownloading()) 0.75f else 1f)
                     Image(
                         modifier = Modifier
                             .size(96.dp)
