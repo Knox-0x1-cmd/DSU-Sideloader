@@ -109,11 +109,14 @@ public class SparseInputStream extends InputStream {
             throw new IOException("Illegal chunk header size");
         }
         mBlockSize = buf.getInt();
-        if ((mBlockSize & 0x3) != 0) {
-            throw new IOException("Illegal block size, must be a multiple of 4");
+        if (mBlockSize <= 0 || (mBlockSize & 0x3) != 0 || mBlockSize > (1 << 24)) {
+            throw new IOException("Illegal block size: " + mBlockSize);
         }
         mTotalBlocks = buf.getInt();
         mTotalChunks = buf.getInt();
+        if (mTotalBlocks < 0 || mTotalChunks < 0) {
+            throw new IOException("Corrupted sparse header");
+        }
         mLeft = mCurChunks = 0;
     }
 
@@ -129,7 +132,7 @@ public class SparseInputStream extends InputStream {
             if (mCur.mChunkType == SparseChunk.FILL) {
                 mCur.fill = readFull(mIn, 4);
             }
-            mLeft = mCur.mChunkSize * mBlockSize;
+            mLeft = Integer.toUnsignedLong(mCur.mChunkSize) * mBlockSize;
         }
         return mLeft == 0;
     }
@@ -140,10 +143,11 @@ public class SparseInputStream extends InputStream {
             return mIn.read(buf, off, len);
         }
         if (prepareChunk()) return -1;
-        int n = -1;
+        int n;
         switch (mCur.mChunkType) {
             case SparseChunk.RAW:
                 n = mIn.read(buf, off, (int) min(mLeft, len));
+                if (n < 0) return -1;
                 mLeft -= n;
                 return n;
             case SparseChunk.DONTCARE:
@@ -165,10 +169,11 @@ public class SparseInputStream extends InputStream {
             return mIn.read();
         }
         if (prepareChunk()) return -1;
-        int ret = -1;
+        int ret;
         switch (mCur.mChunkType) {
             case SparseChunk.RAW:
                 ret = mIn.read();
+                if (ret < 0) return -1;
                 break;
             case SparseChunk.DONTCARE:
                 ret = 0;
@@ -191,6 +196,6 @@ public class SparseInputStream extends InputStream {
         if (!mIsSparse) {
             return -1;
         }
-        return mBlockSize * mTotalBlocks;
+        return Integer.toUnsignedLong(mTotalBlocks) * mBlockSize;
     }
 }

@@ -135,7 +135,12 @@ class Preparation(
         // by reading the lasts four bytes.
         if (fileSize < three_gb) {
             val inputStream = storageManager.openInputStream(uri)
-            inputStream.skip(fileSize - 4)
+            var skipped = 0L
+            while (skipped < fileSize - 4) {
+                val n = inputStream.skip(fileSize - 4 - skipped)
+                if (n <= 0) break
+                skipped += n
+            }
             val bytes = ByteArray(4)
             inputStream.read(bytes)
             bytes.reverse() // Little endian -> Big endian
