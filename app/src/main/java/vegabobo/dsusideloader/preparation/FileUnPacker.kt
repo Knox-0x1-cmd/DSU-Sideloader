@@ -2,12 +2,13 @@ package vegabobo.dsusideloader.preparation
 
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
+import java.io.FilterInputStream
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 import kotlinx.coroutines.Job
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
-import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
-import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
+import org.tukaani.xz.XZInputStream
 import vegabobo.dsusideloader.core.StorageManager
 
 class FileUnPacker(
@@ -23,6 +24,29 @@ class FileUnPacker(
     private var outputStream = storageManager.openOutputStream(finalFile.uri)
     private var inputStream = storageManager.openInputStream(inputFile)
     private val inputFileSize = storageManager.getFilesizeFromUri(inputFile)
+
+    private class CountingInputStream(stream: InputStream) : FilterInputStream(stream) {
+        var count: Long = 0
+            private set
+
+        override fun read(): Int {
+            val result = super.read()
+            if (result >= 0) count++
+            return result
+        }
+
+        override fun read(b: ByteArray, off: Int, len: Int): Int {
+            val result = super.read(b, off, len)
+            if (result > 0) count += result
+            return result
+        }
+
+        override fun skip(n: Long): Long {
+            val result = super.skip(n)
+            if (result > 0) count += result
+            return result
+        }
+    }
 
     private fun copy(
         inputStr: InputStream,
@@ -45,7 +69,7 @@ class FileUnPacker(
     }
 
     fun pack(): Pair<Uri, Long> {
-        copy(inputStream, GzipCompressorOutputStream(outputStream)) {
+        copy(inputStream, GZIPOutputStream(outputStream)) {
             updateProgress(inputFileSize, it)
         }
         val fileLength = storageManager.getFilesizeFromUri(finalFile.uri)
@@ -53,17 +77,18 @@ class FileUnPacker(
     }
 
     fun unpack(): Pair<Uri, Long> {
+        val countingInputStream = CountingInputStream(inputStream)
         val archiveInputStream =
             with(storageManager.getFilenameFromUri(inputFile)) {
                 when {
-                    endsWith("xz") -> XZCompressorInputStream(inputStream)
-                    endsWith("gz") -> GzipCompressorInputStream(inputStream)
-                    endsWith("gzip") -> GzipCompressorInputStream(inputStream)
+                    endsWith("xz") -> XZInputStream(countingInputStream)
+                    endsWith("gz") -> GZIPInputStream(countingInputStream)
+                    endsWith("gzip") -> GZIPInputStream(countingInputStream)
                     else -> throw Exception("File type not supported")
                 }
             }
         copy(archiveInputStream, outputStream) {
-            updateProgress(inputFileSize, archiveInputStream.compressedCount)
+            updateProgress(inputFileSize, countingInputStream.count)
         }
         val fileLength = storageManager.getFilesizeFromUri(finalFile.uri)
         return Pair(finalFile.uri, fileLength)
