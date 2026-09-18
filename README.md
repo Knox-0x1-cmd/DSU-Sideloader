@@ -13,17 +13,13 @@ A simple app to help users easily install GSIs via DSU's Android feature.
 - Device with Dynamic Partitions
 - A GSI you want to use!
 
-Community GSIs: https://github.com/phhusson/treble_experimentations/wiki/Generic-System-Image-%28GSI%29-list
-
 Google GSIs: https://developer.android.com/topic/generic-system-image/releases
 
 **Remember to use GSIs compatible with your architecture, VNDK implementation...**
 
 ## Downloads
 
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/vegabobo.dsusideloader/)
-
-Or download the latest APK from the [Releases Section](https://github.com/Knox-0x1-cmd/DSU-Sideloader/releases/latest).
+Download the latest APK from the [Releases Section](https://github.com/Knox-0x1-cmd/DSU-Sideloader/releases/latest).
 For testing builds, check artifacts at [Actions](https://github.com/Knox-0x1-cmd/DSU-Sideloader/actions) tab.
 
 ## What's New in v2.04
