@@ -1,6 +1,7 @@
 package vegabobo.dsusideloader.preparation
 
 import android.net.Uri
+import android.util.Log
 import java.math.BigInteger
 import kotlinx.coroutines.Job
 import vegabobo.dsusideloader.core.StorageManager
@@ -38,7 +39,7 @@ class Preparation(
                 )
             }
 
-            "xz", "gz", "gzip", "bz2", "bzip2" -> {
+            "xz", "gz", "gzip", "bz2", "bzip2", "lz4" -> {
                 val result = extractFile(userSelectedFileUri)
                 DSUInstallationSource.SingleSystemImage(result.first, result.second)
             }
@@ -69,7 +70,7 @@ class Preparation(
                 "bz2", "bzip2" -> prepareBz2(userSelectedFileUri)
                 "lz4" -> prepareLz4(userSelectedFileUri)
                 "zip" -> prepareZip(userSelectedFileUri)
-                else -> throw Exception("Unsupported filetype")
+                else -> throw Exception("Unsupported filetype: $fileExtension")
             }
 
         val preparedUri = preparedFilePair.first
@@ -164,33 +165,43 @@ class Preparation(
         return Pair(uri, extractedFilePair.second)
     }
 
-private fun prepareBz2(bz2File: Uri): Pair<Uri, Long> {
+    private fun prepareBz2(bz2File: Uri): Pair<Uri, Long> {
         val outputFile = getFileName(bz2File)
         onStepUpdate(InstallationStep.DECOMPRESSING_BZ2)
-        val imgFile = FileUnPacker(
-            storageManager,
-            bz2File,
-            outputFile,
-            job,
-            onPreparationProgressUpdate,
-        ).unpack()
-return prepareImage(imgFile.first)
+        return try {
+            val imgFile = FileUnPacker(
+                storageManager,
+                bz2File,
+                outputFile,
+                job,
+                onPreparationProgressUpdate,
+            ).unpack()
+            prepareImage(imgFile.first)
+        } catch (e: Exception) {
+            Log.e("Preparation", "BZ2 decompression failed: ${e.message}", e)
+            throw Exception("BZ2 decompression failed: ${e.message}")
+        }
     }
 
     private fun prepareLz4(lz4File: Uri): Pair<Uri, Long> {
-    val outputFile = getFileName(lz4File)
-    onStepUpdate(InstallationStep.DECOMPRESSING_LZ4)
-    val imgFile = FileUnPacker(
-        storageManager,
-        lz4File,
-        outputFile,
-        job,
-        onPreparationProgressUpdate,
-    ).unpack()
-    return prepareImage(imgFile.first)
-}
+        val outputFile = getFileName(lz4File)
+        onStepUpdate(InstallationStep.DECOMPRESSING_LZ4)
+        return try {
+            val imgFile = FileUnPacker(
+                storageManager,
+                lz4File,
+                outputFile,
+                job,
+                onPreparationProgressUpdate,
+            ).unpack()
+            prepareImage(imgFile.first)
+        } catch (e: Exception) {
+            Log.e("Preparation", "LZ4 decompression failed: ${e.message}", e)
+            throw Exception("LZ4 decompression failed. The file may be corrupted or use an unsupported LZ4 format (legacy/block format). Only standard LZ4 framed format is supported. Error: ${e.message}")
+        }
+    }
 
-private fun extractFile(uri: Uri): Pair<Uri, Long> {
+    private fun extractFile(uri: Uri): Pair<Uri, Long> {
         return extractFile(uri, "system")
     }
 
