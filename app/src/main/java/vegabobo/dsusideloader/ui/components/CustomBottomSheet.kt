@@ -39,10 +39,7 @@ fun CustomBottomSheet(
     content: @Composable ColumnScope.(hideSheet: suspend () -> Unit) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val sheetState = rememberModalBottomSheetState(
-        initialValue = ModalBottomSheetDefaults.Hidden,
-        confirmValueChange = { it != ModalBottomSheetDefaults.HalfExpanded },
-    )
+    val sheetState = rememberModalBottomSheetState()
 
     val isFirst = remember { mutableStateOf(true) }
     val shouldCallOnDismiss = remember { mutableStateOf(true) }
@@ -70,8 +67,6 @@ fun CustomBottomSheet(
     ModalBottomSheet(
         onDismissRequest = { coroutineScope.launch { sheetState.hide() } },
         sheetState = sheetState,
-        sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        containerColor = MaterialTheme.colorScheme.background,
     ) {
         BottomSheetContent(
             title = title,
