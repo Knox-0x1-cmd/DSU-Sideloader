@@ -112,10 +112,10 @@ class SettingsViewModel @Inject constructor(
     fun resetThemeToDefaults() {
         viewModelScope.launch {
             setIntPreference(AppPrefs.THEME_COLOR_SCHEME, 0)
-            setIntPreference(AppPrefs.THEME_CORNER_RADIUS, ThemeConfig.Shapes.medium.roundToInt())
-            setLongPreference(AppPrefs.THEME_PRIMARY_COLOR, ThemeConfig.Colors.primaryLight.value.toLong())
-            setLongPreference(AppPrefs.THEME_SECONDARY_COLOR, ThemeConfig.Colors.secondaryLight.value.toLong())
-            setLongPreference(AppPrefs.THEME_TERTIARY_COLOR, ThemeConfig.Colors.tertiaryLight.value.toLong())
+            setIntPreference(AppPrefs.THEME_CORNER_RADIUS, 28)
+            setLongPreference(AppPrefs.THEME_PRIMARY_COLOR, ThemeConfig.DefaultColors.primaryLight.value.toLong())
+            setLongPreference(AppPrefs.THEME_SECONDARY_COLOR, ThemeConfig.DefaultColors.secondaryLight.value.toLong())
+            setLongPreference(AppPrefs.THEME_TERTIARY_COLOR, ThemeConfig.DefaultColors.tertiaryLight.value.toLong())
         }
     }
 

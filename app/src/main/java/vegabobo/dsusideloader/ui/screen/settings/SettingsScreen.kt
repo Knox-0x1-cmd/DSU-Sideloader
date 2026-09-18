@@ -1,30 +1,16 @@
 package vegabobo.dsusideloader.ui.screen.settings
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.WarningAmber
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonItem
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Menu
+import androidx.compose.material3.MenuItem
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import vegabobo.dsusideloader.R
@@ -124,16 +110,21 @@ fun Settings(
 
         Title(title = stringResource(id = R.string.theme_settings))
 
-        // Color scheme selector
+        // Color scheme selector - simple dropdown style
         PreferenceItem(
             title = stringResource(id = R.string.theme_color_scheme),
+            description = when (uiState.intPreferences[AppPrefs.THEME_COLOR_SCHEME] ?: 0) {
+                0 -> stringResource(id = R.string.theme_color_scheme_system)
+                1 -> stringResource(id = R.string.theme_color_scheme_light)
+                2 -> stringResource(id = R.string.theme_color_scheme_dark)
+                else -> stringResource(id = R.string.theme_color_scheme_system)
+            },
             showToggle = false,
-            onClick = {},
-        )
-        ColorSchemeSelector(
-            selectedIndex = uiState.intPreferences[AppPrefs.THEME_COLOR_SCHEME] ?: 0,
-            onSelectedChange = { index ->
-                settingsViewModel.setIntPreference(AppPrefs.THEME_COLOR_SCHEME, index)
+            onClick = {
+                settingsViewModel.setIntPreference(
+                    AppPrefs.THEME_COLOR_SCHEME,
+                    (uiState.intPreferences[AppPrefs.THEME_COLOR_SCHEME] ?: 0 + 1) % 3
+                )
             },
         )
 
@@ -278,49 +269,31 @@ fun Settings(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ColorSchemeSelector(
-    selectedIndex: Int,
-    onSelectedChange: (Int) -> Unit,
-) {
-    Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-        SegmentedButton(
-            selectedIndex = selectedIndex,
-            onClick = onSelectedChange,
-            modifier = Modifier.fillMaxWidth(),
-            singleChoice = true,
-        ) {
-            SegmentedButtonItem(
-                label = { Text(text = stringResource(id = R.string.theme_color_scheme_system)) },
-                icon = { Icon(Icons.Filled.PhoneAndroid, null) },
-                alwaysShowLabel = true,
-            )
-            SegmentedButtonItem(
-                label = { Text(text = stringResource(id = R.string.theme_color_scheme_light)) },
-                icon = { Icon(Icons.Filled.WbSunny, null) },
-                alwaysShowLabel = true,
-            )
-            SegmentedButtonItem(
-                label = { Text(text = stringResource(id = R.string.theme_color_scheme_dark)) },
-                icon = { Icon(Icons.Filled.NightlightRound, null) },
-                alwaysShowLabel = true,
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 fun ColorPickerBottomSheet(
     title: String,
     onDismiss: () -> Unit,
-    onColorSelected: (Color) -> Unit,
+    onColorSelected: (androidx.compose.ui.graphics.Color) -> Unit,
 ) {
     val materialColors = listOf(
-        Color.Red, Color.Pink, Color.Purple, Color.DeepPurple,
-        Color.Indigo, Color.Blue, Color.LightBlue, Color.Cyan,
-        Color.Teal, Color.Green, Color.LightGreen, Color.Lime,
-        Color.Yellow, Color.Amber, Color.Orange, Color.DeepOrange,
-        Color.Brown, Color.Grey, Color.BlueGrey,
+        androidx.compose.ui.graphics.Color.Red,
+        androidx.compose.ui.graphics.Color.Pink,
+        androidx.compose.ui.graphics.Color.Purple,
+        androidx.compose.ui.graphics.Color.DeepPurple,
+        androidx.compose.ui.graphics.Color.Indigo,
+        androidx.compose.ui.graphics.Color.Blue,
+        androidx.compose.ui.graphics.Color.LightBlue,
+        androidx.compose.ui.graphics.Color.Cyan,
+        androidx.compose.ui.graphics.Color.Teal,
+        androidx.compose.ui.graphics.Color.Green,
+        androidx.compose.ui.graphics.Color.LightGreen,
+        androidx.compose.ui.graphics.Color.Lime,
+        androidx.compose.ui.graphics.Color.Yellow,
+        androidx.compose.ui.graphics.Color.Amber,
+        androidx.compose.ui.graphics.Color.Orange,
+        androidx.compose.ui.graphics.Color.DeepOrange,
+        androidx.compose.ui.graphics.Color.Brown,
+        androidx.compose.ui.graphics.Color.Grey,
+        androidx.compose.ui.graphics.Color.BlueGrey,
     )
 
     val sheetState = remember { androidx.compose.material3.rememberModalBottomSheetState() }
@@ -336,43 +309,45 @@ fun ColorPickerBottomSheet(
             onDismiss()
         },
     ) {
-        Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
+        androidx.compose.foundation.layout.Column(
+            modifier = androidx.compose.ui.Modifier.padding(16.dp).fillMaxWidth()
+        ) {
+            androidx.compose.foundation.layout.Row(
+                modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
             ) {
-                Text(text = title, style = MaterialTheme.typography.titleLarge)
+                androidx.compose.material3.Text(text = title, style = androidx.compose.material3.MaterialTheme.typography.titleLarge)
                 androidx.compose.material3.IconButton(onClick = { sheetState.hide(); onDismiss() }) {
-                    Icon(Icons.Filled.Close, "Close")
+                    androidx.compose.material3.Icon(Icons.Filled.Close, "Close")
                 }
             }
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(top = 8.dp))
-            Column(modifier = Modifier.fillMaxWidth()) {
+            androidx.compose.foundation.layout.Spacer(modifier = androidx.compose.foundation.layout.Modifier.padding(top = 8.dp))
+            androidx.compose.foundation.layout.Column(modifier = androidx.compose.ui.Modifier.fillMaxWidth()) {
                 materialColors.chunked(5).forEach { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
+                    androidx.compose.foundation.layout.Row(
+                        modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
                         horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
                     ) {
                         row.forEach { color ->
-                            Surface(
-                                shape = CircleShape,
+                            androidx.compose.material3.Surface(
+                                shape = androidx.compose.foundation.shape.CircleShape,
                                 color = color,
-                                modifier = Modifier
+                                modifier = androidx.compose.ui.Modifier
                                     .width(40.dp)
                                     .height(40.dp)
                                     .weight(1f)
                                     .fillMaxWidth(),
                             ) {
                                 androidx.compose.foundation.layout.Box(
-                                    modifier = Modifier
+                                    modifier = androidx.compose.ui.Modifier
                                         .fillMaxSize()
                                         .clickable { onColorSelected(color) }
                                 )
                             }
                         }
                     }
-                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(top = 8.dp))
+                    androidx.compose.foundation.layout.Spacer(modifier = androidx.compose.foundation.layout.Modifier.padding(top = 8.dp))
                 }
             }
         }

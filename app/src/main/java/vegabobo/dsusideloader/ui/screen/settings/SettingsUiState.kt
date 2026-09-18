@@ -2,7 +2,6 @@ package vegabobo.dsusideloader.ui.screen.settings
 
 import androidx.compose.ui.graphics.Color
 import vegabobo.dsusideloader.preferences.AppPrefs
-import vegabobo.dsusideloader.ui.theme.ThemeConfig
 
 enum class DialogSheetState {
     NONE,
@@ -20,15 +19,16 @@ data class SettingsUiState(
         AppPrefs.UMOUNT_SD to false,
         AppPrefs.DISABLE_STORAGE_CHECK to false,
         AppPrefs.FULL_LOGCAT_LOGGING to false,
+        AppPrefs.THEME_USE_DYNAMIC_COLOR to true,
     ),
     val intPreferences: HashMap<String, Int> = hashMapOf(
         AppPrefs.THEME_COLOR_SCHEME to 0,
-        AppPrefs.THEME_CORNER_RADIUS to ThemeConfig.Shapes.medium.roundToInt(),
+        AppPrefs.THEME_CORNER_RADIUS to 28,
     ),
     val longPreferences: HashMap<String, Long> = hashMapOf(
-        AppPrefs.THEME_PRIMARY_COLOR to ThemeConfig.Colors.primaryLight.value.toLong(),
-        AppPrefs.THEME_SECONDARY_COLOR to ThemeConfig.Colors.secondaryLight.value.toLong(),
-        AppPrefs.THEME_TERTIARY_COLOR to ThemeConfig.Colors.tertiaryLight.value.toLong(),
+        AppPrefs.THEME_PRIMARY_COLOR to Color(0xFF275CAF).value.toLong(),
+        AppPrefs.THEME_SECONDARY_COLOR to Color(0xFF565E71).value.toLong(),
+        AppPrefs.THEME_TERTIARY_COLOR to Color(0xFF715574).value.toLong(),
     ),
     val dialogSheetDisplay: DialogSheetState = DialogSheetState.NONE,
     val isRoot: Boolean = false,

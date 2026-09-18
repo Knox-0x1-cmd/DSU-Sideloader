@@ -68,7 +68,7 @@ object ThemeConfig {
         secondaryLight = Color(secondaryColor.toInt())
         tertiaryLight = Color(tertiaryColor.toInt())
 
-        // For dark, use lighter variants (simple approach - could be improved)
+        // For dark, use lighter variants
         primaryDark = Color(primaryColor.toInt()).copy(alpha = 0.8f)
         secondaryDark = Color(secondaryColor.toInt()).copy(alpha = 0.8f)
         tertiaryDark = Color(tertiaryColor.toInt()).copy(alpha = 0.8f)
