@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
+import vegabobo.dsusideloader.ui.theme.ThemeConfig
 
 @Composable
 fun CardBox(
@@ -27,7 +28,7 @@ fun CardBox(
     addPadding: Boolean = true,
     cardColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.inverseOnSurface,
     onCheckedChange: ((Boolean) -> Unit) = {},
-    shape: Shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+    shape: Shape = androidx.compose.foundation.shape.RoundedCornerShape(ThemeConfig.Shapes.medium),
     content: @Composable (ColumnScope) -> Unit,
 ) {
     Box(
