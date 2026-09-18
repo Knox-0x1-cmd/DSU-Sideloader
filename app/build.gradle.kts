@@ -1,4 +1,5 @@
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 fun getReleaseSigningConfig(): File {
     return File(".sign/dsu_sideloader.prop")
@@ -90,7 +91,7 @@ android {
     kotlin {
         jvmToolchain(17)
         compilerOptions {
-            jvmTarget.set("17")
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
     buildFeatures {
