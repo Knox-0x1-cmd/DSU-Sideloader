@@ -10,6 +10,7 @@ import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import kotlinx.coroutines.Job
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
+import org.apache.commons.compress.compressors.lz4.LZ4BlockInputStream
 import org.apache.commons.compress.compressors.lz4.LZ4FramedInputStream
 import org.tukaani.xz.XZInputStream
 import vegabobo.dsusideloader.core.StorageManager
