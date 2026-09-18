@@ -162,6 +162,23 @@
 
     <string name="other">Other</string>
 
+    <!--
+        Theme settings
+    -->
+    <string name="theme_settings">Theme</string>
+    <string name="theme_color_scheme">Color scheme</string>
+    <string name="theme_color_scheme_system">System default</string>
+    <string name="theme_color_scheme_light">Light</string>
+    <string name="theme_color_scheme_dark">Dark</string>
+    <string name="theme_dynamic_color">Dynamic color (Material You)</string>
+    <string name="theme_dynamic_color_description">Extract colors from wallpaper (Android 12+)</string>
+    <string name="theme_primary_color">Primary color</string>
+    <string name="theme_secondary_color">Secondary color</string>
+    <string name="theme_tertiary_color">Tertiary color</string>
+    <string name="theme_corner_radius">Corner radius</string>
+    <string name="theme_corner_radius_description">Roundness of cards and buttons</string>
+    <string name="theme_reset">Reset to defaults</string>
+
     <string name="operation_mode">Operation mode</string>
 
     <string name="about">About</string>

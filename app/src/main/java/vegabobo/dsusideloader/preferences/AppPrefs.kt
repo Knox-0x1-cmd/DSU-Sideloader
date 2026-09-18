@@ -20,4 +20,12 @@ object AppPrefs {
     const val UMOUNT_SD = "umount_sd"
     const val DISABLE_STORAGE_CHECK = "disable_storage_check"
     const val FULL_LOGCAT_LOGGING = "full_logcat_logging"
+
+    // Theme preferences
+    const val THEME_COLOR_SCHEME = "theme_color_scheme" // 0=system, 1=light, 2=dark
+    const val THEME_PRIMARY_COLOR = "theme_primary_color"
+    const val THEME_SECONDARY_COLOR = "theme_secondary_color"
+    const val THEME_TERTIARY_COLOR = "theme_tertiary_color"
+    const val THEME_CORNER_RADIUS = "theme_corner_radius"
+    const val THEME_USE_DYNAMIC_COLOR = "theme_use_dynamic_color"
 }

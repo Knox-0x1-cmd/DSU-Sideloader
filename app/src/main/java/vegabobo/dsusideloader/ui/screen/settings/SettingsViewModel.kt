@@ -18,6 +18,7 @@ import vegabobo.dsusideloader.model.Session
 import vegabobo.dsusideloader.preferences.AppPrefs
 import vegabobo.dsusideloader.util.OperationMode
 import vegabobo.dsusideloader.util.OperationModeUtils
+import vegabobo.dsusideloader.ui.theme.ThemeConfig
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
@@ -32,10 +33,28 @@ class SettingsViewModel @Inject constructor(
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     fun reloadPreferences() {
-        uiState.value.preferences.forEach { entry ->
-            viewModelScope.launch {
+        viewModelScope.launch {
+            uiState.value.preferences.forEach { entry ->
                 val isEnabled = readBoolPref(entry.key)
                 togglePreference(entry.key, isEnabled)
+            }
+            uiState.value.intPreferences.forEach { entry ->
+                val value = readIntPref(entry.key)
+                _uiState.update {
+                    val cloneMap = hashMapOf<String, Int>()
+                    cloneMap.putAll(uiState.value.intPreferences)
+                    cloneMap[entry.key] = value
+                    it.copy(intPreferences = cloneMap)
+                }
+            }
+            uiState.value.longPreferences.forEach { entry ->
+                val value = readLongPref(entry.key)
+                _uiState.update {
+                    val cloneMap = hashMapOf<String, Long>()
+                    cloneMap.putAll(uiState.value.longPreferences)
+                    cloneMap[entry.key] = value
+                    it.copy(longPreferences = cloneMap)
+                }
             }
         }
 
@@ -59,6 +78,44 @@ class SettingsViewModel @Inject constructor(
                     it.copy(preferences = cloneMap)
                 }
             }
+        }
+    }
+
+    fun setIntPreference(preference: String, value: Int) {
+        viewModelScope.launch {
+            updateIntPref(preference, value) {
+                _uiState.update {
+                    val cloneMap = hashMapOf<String, Int>()
+                    cloneMap.putAll(uiState.value.intPreferences)
+                    cloneMap[preference] = value
+                    Log.d(tag, "int preference: $preference, value: $value")
+                    it.copy(intPreferences = cloneMap)
+                }
+            }
+        }
+    }
+
+    fun setLongPreference(preference: String, value: Long) {
+        viewModelScope.launch {
+            updateLongPref(preference, value) {
+                _uiState.update {
+                    val cloneMap = hashMapOf<String, Long>()
+                    cloneMap.putAll(uiState.value.longPreferences)
+                    cloneMap[preference] = value
+                    Log.d(tag, "long preference: $preference, value: $value")
+                    it.copy(longPreferences = cloneMap)
+                }
+            }
+        }
+    }
+
+    fun resetThemeToDefaults() {
+        viewModelScope.launch {
+            setIntPreference(AppPrefs.THEME_COLOR_SCHEME, 0)
+            setIntPreference(AppPrefs.THEME_CORNER_RADIUS, ThemeConfig.Shapes.medium.roundToInt())
+            setLongPreference(AppPrefs.THEME_PRIMARY_COLOR, ThemeConfig.Colors.primaryLight.value.toLong())
+            setLongPreference(AppPrefs.THEME_SECONDARY_COLOR, ThemeConfig.Colors.secondaryLight.value.toLong())
+            setLongPreference(AppPrefs.THEME_TERTIARY_COLOR, ThemeConfig.Colors.tertiaryLight.value.toLong())
         }
     }
 

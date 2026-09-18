@@ -4,6 +4,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -19,6 +21,26 @@ class DataStoreUtils {
         ): Boolean {
             return dataStore.data.map {
                 it[booleanPreferencesKey(key)] ?: default
+            }.first()
+        }
+
+        suspend fun readIntPref(
+            dataStore: DataStore<Preferences>,
+            key: String,
+            default: Int,
+        ): Int {
+            return dataStore.data.map {
+                it[intPreferencesKey(key)] ?: default
+            }.first()
+        }
+
+        suspend fun readLongPref(
+            dataStore: DataStore<Preferences>,
+            key: String,
+            default: Long,
+        ): Long {
+            return dataStore.data.map {
+                it[longPreferencesKey(key)] ?: default
             }.first()
         }
 
@@ -50,6 +72,32 @@ class DataStoreUtils {
         ) {
             dataStore.edit {
                 it[booleanPreferencesKey(key)] = value
+                return@edit
+            }
+            onFinish()
+        }
+
+        suspend fun updateIntPref(
+            dataStore: DataStore<Preferences>,
+            key: String,
+            value: Int,
+            onFinish: () -> Unit = {},
+        ) {
+            dataStore.edit {
+                it[intPreferencesKey(key)] = value
+                return@edit
+            }
+            onFinish()
+        }
+
+        suspend fun updateLongPref(
+            dataStore: DataStore<Preferences>,
+            key: String,
+            value: Long,
+            onFinish: () -> Unit = {},
+        ) {
+            dataStore.edit {
+                it[longPreferencesKey(key)] = value
                 return@edit
             }
             onFinish()

@@ -23,6 +23,7 @@ import vegabobo.dsusideloader.service.PrivilegedService
 import vegabobo.dsusideloader.service.PrivilegedSystemService
 import vegabobo.dsusideloader.ui.screen.Navigation
 import vegabobo.dsusideloader.ui.theme.DSUHelperTheme
+import vegabobo.dsusideloader.ui.theme.ThemeManager
 import vegabobo.dsusideloader.util.OperationMode
 import vegabobo.dsusideloader.util.OperationModeUtils
 
@@ -30,7 +31,7 @@ import vegabobo.dsusideloader.util.OperationModeUtils
 class MainActivity : ComponentActivity(), Shizuku.OnRequestPermissionResultListener {
 
     @Inject
-    lateinit var session: Session
+    lateinit var dataStore: androidx.datastore.core.DataStore<androidx.datastore.preferences.core.Preferences>
 
     private val tag = this.javaClass.simpleName
 
@@ -129,6 +130,8 @@ class MainActivity : ComponentActivity(), Shizuku.OnRequestPermissionResultListe
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Load and apply theme preferences before setting content
+        ThemeManager.loadAndApplyTheme(this, dataStore)
         Shell.getShell {}
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
