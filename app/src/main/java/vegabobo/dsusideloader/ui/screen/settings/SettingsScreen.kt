@@ -24,6 +24,7 @@ import vegabobo.dsusideloader.ui.screen.Destinations
 import vegabobo.dsusideloader.util.OperationMode
 import vegabobo.dsusideloader.util.collectAsStateWithLifecycle
 import vegabobo.dsusideloader.ui.theme.ThemeConfig
+import androidx.compose.ui.graphics.Color as ComposeColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -136,7 +137,7 @@ fun Settings(
         // Color pickers - cycle through preset colors on click
         ColorPickerRow(
             label = stringResource(id = R.string.theme_primary_color),
-            color = androidx.compose.ui.graphics.Color(uiState.longPreferences[AppPrefs.THEME_PRIMARY_COLOR]?.toInt() ?: ThemeConfig.DefaultColors.primaryLight.value),
+            color = ComposeColor((uiState.longPreferences[AppPrefs.THEME_PRIMARY_COLOR]?.toInt() ?: ThemeConfig.DefaultColors.primaryLight.value.toInt())),
             onColorClick = {
                 settingsViewModel.cycleColor(AppPrefs.THEME_PRIMARY_COLOR)
             },
@@ -148,7 +149,7 @@ fun Settings(
         )
         ColorPickerRow(
             label = stringResource(id = R.string.theme_secondary_color),
-            color = androidx.compose.ui.graphics.Color(uiState.longPreferences[AppPrefs.THEME_SECONDARY_COLOR]?.toInt() ?: ThemeConfig.DefaultColors.secondaryLight.value),
+            color = ComposeColor((uiState.longPreferences[AppPrefs.THEME_SECONDARY_COLOR]?.toInt() ?: ThemeConfig.DefaultColors.secondaryLight.value.toInt())),
             onColorClick = {
                 settingsViewModel.cycleColor(AppPrefs.THEME_SECONDARY_COLOR)
             },
@@ -160,7 +161,7 @@ fun Settings(
         )
         ColorPickerRow(
             label = stringResource(id = R.string.theme_tertiary_color),
-            color = androidx.compose.ui.graphics.Color(uiState.longPreferences[AppPrefs.THEME_TERTIARY_COLOR]?.toInt() ?: ThemeConfig.DefaultColors.tertiaryLight.value),
+            color = ComposeColor((uiState.longPreferences[AppPrefs.THEME_TERTIARY_COLOR]?.toInt() ?: ThemeConfig.DefaultColors.tertiaryLight.value.toInt())),
             onColorClick = {
                 settingsViewModel.cycleColor(AppPrefs.THEME_TERTIARY_COLOR)
             },
