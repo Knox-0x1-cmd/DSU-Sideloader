@@ -1,9 +1,20 @@
-name: Release
+name: Build & Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      type:
+        description: 'Build type'
+        required: true
+        type: choice
+        options:
+          - release
+          - test
+        default: 'test'
+      tag:
+        description: 'Tag name (required for release, e.g. v2.04)'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -55,6 +66,7 @@ jobs:
 
   release:
     needs: build
+    if: github.event.inputs.type == 'release'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -74,10 +86,10 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref_name }}
-        name: DSU Sideloader ${{ github.ref_name }}
+        tag_name: ${{ github.event.inputs.tag }}
+        name: DSU Sideloader ${{ github.event.inputs.tag }}
         body: |
-          ## DSU Sideloader ${{ github.ref_name }}
+          ## DSU Sideloader ${{ github.event.inputs.tag }}
 
           ### Changes
           - New icon applied to all mipmap densities
