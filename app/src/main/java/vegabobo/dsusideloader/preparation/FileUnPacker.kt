@@ -90,19 +90,19 @@ class FileUnPacker(
     }
 
     fun unpack(): Pair<Uri, Long> {
-        val progressScope = CoroutineScope(Dispatchers.IO)
-        val progressJob = progressScope.launch {
-            while (!installationJob.isCancelled) {
-                delay(200)
-                if (!installationJob.isCancelled) {
-                    updateProgress(inputFileSize, countingInputStream?.count ?: 0L)
-                }
-            }
-        }
-
         val countingInputStream = CountingInputStream(inputStream)
         val archiveInputStream: InputStream
         try {
+            val progressScope = CoroutineScope(Dispatchers.IO)
+            val progressJob = progressScope.launch {
+                while (!installationJob.isCancelled) {
+                    delay(200)
+                    if (!installationJob.isCancelled) {
+                        updateProgress(inputFileSize, countingInputStream.count)
+                    }
+                }
+            }
+
             archiveInputStream = with(storageManager.getFilenameFromUri(inputFile)) {
                 when {
                     endsWith("xz") -> XZInputStream(countingInputStream)
@@ -125,7 +125,6 @@ class FileUnPacker(
                 updateProgress(inputFileSize, countingInputStream.count)
             }
         } finally {
-            progressJob.cancel()
             closeQuietly(inputStream)
             closeQuietly(outputStream)
         }
