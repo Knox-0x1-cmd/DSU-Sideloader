@@ -10,8 +10,7 @@ import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 import kotlinx.coroutines.Job
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
-import org.apache.commons.compress.compressors.lz4.LZ4BlockInputStream
-import org.apache.commons.compress.compressors.lz4.LZ4FramedInputStream
+import net.jpountz.lz4.LZ4FramedInputStream
 import org.tukaani.xz.XZInputStream
 import vegabobo.dsusideloader.core.StorageManager
 
@@ -98,7 +97,7 @@ class FileUnPacker(
                         endsWith("bzip2") -> BZip2CompressorInputStream(countingInputStream)
                         endsWith("zst") -> org.zstd.ZstdInputStream(countingInputStream)
                         endsWith("zstd") -> org.zstd.ZstdInputStream(countingInputStream)
-                        endsWith("lz4") -> LZ4FramedInputStream(countingInputStream)
+                        endsWith("lz4") -> net.jpountz.lz4.LZ4FramedInputStream(countingInputStream)
                         else -> throw Exception("File type not supported")
                     }
                 }
