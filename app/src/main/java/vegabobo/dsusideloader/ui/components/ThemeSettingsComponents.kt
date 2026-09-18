@@ -59,14 +59,14 @@ fun ColorPickerRow(
             ) {}
             IconButton(onClick = onColorClick) {
                 Icon(
-                    imageVector = Icons.Default.Filled.Palette,
+                    imageVector = Icons.Filled.Palette,
                     contentDescription = stringResource(id = R.string.theme_primary_color),
                 )
             }
             if (showReset && resetColor != Color.Unspecified) {
                 IconButton(onClick = onResetClick) {
                     Icon(
-                        imageVector = Icons.Default.Filled.Restore,
+                        imageVector = Icons.Filled.Restore,
                         contentDescription = stringResource(id = R.string.theme_reset),
                     )
                 }
