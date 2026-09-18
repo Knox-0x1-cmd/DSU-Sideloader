@@ -2,6 +2,7 @@ package vegabobo.dsusideloader.preparation
 
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
+import android.util.Log
 import java.io.Closeable
 import java.io.FilterInputStream
 import java.io.InputStream
@@ -95,7 +96,14 @@ class FileUnPacker(
                         endsWith("gzip") -> GZIPInputStream(countingInputStream)
                         endsWith("bz2") -> BZip2CompressorInputStream(countingInputStream)
                         endsWith("bzip2") -> BZip2CompressorInputStream(countingInputStream)
-                        endsWith("lz4") -> LZ4FrameInputStream(countingInputStream)
+                        endsWith("lz4") -> {
+                            try {
+                                LZ4FrameInputStream(countingInputStream)
+                            } catch (e: Exception) {
+                                Log.e("FileUnPacker", "LZ4 decompression failed: ${e.message}", e)
+                                throw Exception("LZ4 decompression failed. The file may be corrupted or use an unsupported LZ4 format (legacy/block format). Only standard LZ4 framed format is supported. Error: ${e.message}")
+                            }
+                        }
                         else -> throw Exception("File type not supported")
                     }
                 }
