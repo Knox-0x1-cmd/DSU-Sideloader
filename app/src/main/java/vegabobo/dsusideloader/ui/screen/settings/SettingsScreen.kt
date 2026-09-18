@@ -5,8 +5,6 @@ import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Menu
-import androidx.compose.material3.MenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -137,12 +135,12 @@ fun Settings(
             onClick = { settingsViewModel.togglePreference(AppPrefs.THEME_USE_DYNAMIC_COLOR, !it) },
         )
 
-        // Color pickers
+        // Color pickers - cycle through preset colors on click
         ColorPickerRow(
             label = stringResource(id = R.string.theme_primary_color),
-            color = Color(uiState.longPreferences[AppPrefs.THEME_PRIMARY_COLOR]?.toInt() ?: ThemeConfig.DefaultColors.primaryLight.value),
+            color = androidx.compose.ui.graphics.Color(uiState.longPreferences[AppPrefs.THEME_PRIMARY_COLOR]?.toInt() ?: ThemeConfig.DefaultColors.primaryLight.value),
             onColorClick = {
-                settingsViewModel.updateSheetDisplay(DialogSheetState.THEME_COLOR_PICKER_PRIMARY)
+                settingsViewModel.cycleColor(AppPrefs.THEME_PRIMARY_COLOR)
             },
             showReset = true,
             resetColor = ThemeConfig.DefaultColors.primaryLight,
@@ -152,9 +150,9 @@ fun Settings(
         )
         ColorPickerRow(
             label = stringResource(id = R.string.theme_secondary_color),
-            color = Color(uiState.longPreferences[AppPrefs.THEME_SECONDARY_COLOR]?.toInt() ?: ThemeConfig.DefaultColors.secondaryLight.value),
+            color = androidx.compose.ui.graphics.Color(uiState.longPreferences[AppPrefs.THEME_SECONDARY_COLOR]?.toInt() ?: ThemeConfig.DefaultColors.secondaryLight.value),
             onColorClick = {
-                settingsViewModel.updateSheetDisplay(DialogSheetState.THEME_COLOR_PICKER_SECONDARY)
+                settingsViewModel.cycleColor(AppPrefs.THEME_SECONDARY_COLOR)
             },
             showReset = true,
             resetColor = ThemeConfig.DefaultColors.secondaryLight,
@@ -164,9 +162,9 @@ fun Settings(
         )
         ColorPickerRow(
             label = stringResource(id = R.string.theme_tertiary_color),
-            color = Color(uiState.longPreferences[AppPrefs.THEME_TERTIARY_COLOR]?.toInt() ?: ThemeConfig.DefaultColors.tertiaryLight.value),
+            color = androidx.compose.ui.graphics.Color(uiState.longPreferences[AppPrefs.THEME_TERTIARY_COLOR]?.toInt() ?: ThemeConfig.DefaultColors.tertiaryLight.value),
             onColorClick = {
-                settingsViewModel.updateSheetDisplay(DialogSheetState.THEME_COLOR_PICKER_TERTIARY)
+                settingsViewModel.cycleColor(AppPrefs.THEME_TERTIARY_COLOR)
             },
             showReset = true,
             resetColor = ThemeConfig.DefaultColors.tertiaryLight,
@@ -177,7 +175,7 @@ fun Settings(
 
         // Corner radius slider
         CornerRadiusSlider(
-            value = uiState.intPreferences[AppPrefs.THEME_CORNER_RADIUS] ?: ThemeConfig.Shapes.medium.roundToInt(),
+            value = uiState.intPreferences[AppPrefs.THEME_CORNER_RADIUS] ?: 28,
             onValueChange = { value ->
                 settingsViewModel.setIntPreference(AppPrefs.THEME_CORNER_RADIUS, value)
             },
@@ -233,123 +231,6 @@ fun Settings(
                 onClickConfirm = { settingsViewModel.updateSheetDisplay(DialogSheetState.NONE) },
             )
 
-        DialogSheetState.THEME_COLOR_PICKER_PRIMARY ->
-            ColorPickerBottomSheet(
-                title = stringResource(id = R.string.theme_primary_color),
-                onDismiss = { settingsViewModel.updateSheetDisplay(DialogSheetState.NONE) },
-                onColorSelected = { color ->
-                    settingsViewModel.setLongPreference(AppPrefs.THEME_PRIMARY_COLOR, color.value.toLong())
-                    settingsViewModel.updateSheetDisplay(DialogSheetState.NONE)
-                },
-            )
-
-        DialogSheetState.THEME_COLOR_PICKER_SECONDARY ->
-            ColorPickerBottomSheet(
-                title = stringResource(id = R.string.theme_secondary_color),
-                onDismiss = { settingsViewModel.updateSheetDisplay(DialogSheetState.NONE) },
-                onColorSelected = { color ->
-                    settingsViewModel.setLongPreference(AppPrefs.THEME_SECONDARY_COLOR, color.value.toLong())
-                    settingsViewModel.updateSheetDisplay(DialogSheetState.NONE)
-                },
-            )
-
-        DialogSheetState.THEME_COLOR_PICKER_TERTIARY ->
-            ColorPickerBottomSheet(
-                title = stringResource(id = R.string.theme_tertiary_color),
-                onDismiss = { settingsViewModel.updateSheetDisplay(DialogSheetState.NONE) },
-                onColorSelected = { color ->
-                    settingsViewModel.setLongPreference(AppPrefs.THEME_TERTIARY_COLOR, color.value.toLong())
-                    settingsViewModel.updateSheetDisplay(DialogSheetState.NONE)
-                },
-            )
-
         else -> {}
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ColorPickerBottomSheet(
-    title: String,
-    onDismiss: () -> Unit,
-    onColorSelected: (androidx.compose.ui.graphics.Color) -> Unit,
-) {
-    val materialColors = listOf(
-        androidx.compose.ui.graphics.Color.Red,
-        androidx.compose.ui.graphics.Color.Pink,
-        androidx.compose.ui.graphics.Color.Purple,
-        androidx.compose.ui.graphics.Color.DeepPurple,
-        androidx.compose.ui.graphics.Color.Indigo,
-        androidx.compose.ui.graphics.Color.Blue,
-        androidx.compose.ui.graphics.Color.LightBlue,
-        androidx.compose.ui.graphics.Color.Cyan,
-        androidx.compose.ui.graphics.Color.Teal,
-        androidx.compose.ui.graphics.Color.Green,
-        androidx.compose.ui.graphics.Color.LightGreen,
-        androidx.compose.ui.graphics.Color.Lime,
-        androidx.compose.ui.graphics.Color.Yellow,
-        androidx.compose.ui.graphics.Color.Amber,
-        androidx.compose.ui.graphics.Color.Orange,
-        androidx.compose.ui.graphics.Color.DeepOrange,
-        androidx.compose.ui.graphics.Color.Brown,
-        androidx.compose.ui.graphics.Color.Grey,
-        androidx.compose.ui.graphics.Color.BlueGrey,
-    )
-
-    val sheetState = remember { androidx.compose.material3.rememberModalBottomSheetState() }
-
-    LaunchedEffect(Unit) {
-        sheetState.show()
-    }
-
-    androidx.compose.material3.ModalBottomSheet(
-        sheetState = sheetState,
-        onDismissRequest = {
-            sheetState.hide()
-            onDismiss()
-        },
-    ) {
-        androidx.compose.foundation.layout.Column(
-            modifier = androidx.compose.ui.Modifier.padding(16.dp).fillMaxWidth()
-        ) {
-            androidx.compose.foundation.layout.Row(
-                modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-            ) {
-                androidx.compose.material3.Text(text = title, style = androidx.compose.material3.MaterialTheme.typography.titleLarge)
-                androidx.compose.material3.IconButton(onClick = { sheetState.hide(); onDismiss() }) {
-                    androidx.compose.material3.Icon(Icons.Filled.Close, "Close")
-                }
-            }
-            androidx.compose.foundation.layout.Spacer(modifier = androidx.compose.foundation.layout.Modifier.padding(top = 8.dp))
-            androidx.compose.foundation.layout.Column(modifier = androidx.compose.ui.Modifier.fillMaxWidth()) {
-                materialColors.chunked(5).forEach { row ->
-                    androidx.compose.foundation.layout.Row(
-                        modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
-                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
-                    ) {
-                        row.forEach { color ->
-                            androidx.compose.material3.Surface(
-                                shape = androidx.compose.foundation.shape.CircleShape,
-                                color = color,
-                                modifier = androidx.compose.ui.Modifier
-                                    .width(40.dp)
-                                    .height(40.dp)
-                                    .weight(1f)
-                                    .fillMaxWidth(),
-                            ) {
-                                androidx.compose.foundation.layout.Box(
-                                    modifier = androidx.compose.ui.Modifier
-                                        .fillMaxSize()
-                                        .clickable { onColorSelected(color) }
-                                )
-                            }
-                        }
-                    }
-                    androidx.compose.foundation.layout.Spacer(modifier = androidx.compose.foundation.layout.Modifier.padding(top = 8.dp))
-                }
-            }
-        }
     }
 }

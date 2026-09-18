@@ -29,6 +29,29 @@ class SettingsViewModel @Inject constructor(
 
     private val tag = this.javaClass.simpleName
 
+    // Preset Material 3 colors for cycling
+    private val presetColors = listOf(
+        Color(0xFF275CAF), // Blue
+        Color(0xFF006874), // Cyan
+        Color(0xFF006D32), // Green
+        Color(0xFF4A6302), // Light Green
+        Color(0xFF7D4F00), // Amber
+        Color(0xFFBF360C), // Deep Orange
+        Color(0xFFB71C1C), // Red
+        Color(0xFF880E4F), // Pink
+        Color(0xFF4A148C), // Purple
+        Color(0xFF311B92), // Deep Purple
+        Color(0xFF1A237E), // Indigo
+        Color(0xFF01579B), // Light Blue
+        Color(0xFF004D40), // Teal
+        Color(0xFF1B5E20), // Green
+        Color(0xFF33691E), // Lime
+        Color(0xFFF57F17), // Yellow
+        Color(0xFFE65100), // Orange
+        Color(0xFF3E2723), // Brown
+        Color(0xFF263238), // Blue Grey
+    )
+
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
@@ -106,6 +129,16 @@ class SettingsViewModel @Inject constructor(
                     it.copy(longPreferences = cloneMap)
                 }
             }
+        }
+    }
+
+    fun cycleColor(preference: String) {
+        viewModelScope.launch {
+            val currentColor = uiState.value.longPreferences[preference]?.toInt() ?: ThemeConfig.DefaultColors.primaryLight.value
+            val currentIndex = presetColors.indexOfFirst { it.value == currentColor }
+            val nextIndex = if (currentIndex >= 0) (currentIndex + 1) % presetColors.size else 0
+            val nextColor = presetColors[nextIndex].value.toLong()
+            setLongPreference(preference, nextColor)
         }
     }
 
