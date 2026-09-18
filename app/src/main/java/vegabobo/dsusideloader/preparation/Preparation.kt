@@ -174,11 +174,10 @@ private fun prepareBz2(bz2File: Uri): Pair<Uri, Long> {
             job,
             onPreparationProgressUpdate,
         ).unpack()
-        return prepareImage(imgFile.first)
+return prepareImage(imgFile.first)
     }
-}
 
-private fun prepareLz4(lz4File: Uri): Pair<Uri, Long> {
+    private fun prepareLz4(lz4File: Uri): Pair<Uri, Long> {
     val outputFile = getFileName(lz4File)
     onStepUpdate(InstallationStep.DECOMPRESSING_LZ4)
     val imgFile = FileUnPacker(
