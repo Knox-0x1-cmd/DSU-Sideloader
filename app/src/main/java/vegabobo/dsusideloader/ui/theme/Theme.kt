@@ -37,6 +37,17 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+private val Shapes = androidx.compose.material3.Shapes(
+    extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+    small = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+    medium = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+    large = androidx.compose.foundation.shape.RoundedCornerShape(32.dp),
+    extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(36.dp),
+    largeIncreased = androidx.compose.foundation.shape.RoundedCornerShape(32.dp),
+    extraLargeIncreased = androidx.compose.foundation.shape.RoundedCornerShape(36.dp),
+    extraExtraLarge = androidx.compose.foundation.shape.RoundedCornerShape(36.dp),
+)
+
 @Composable
 fun DSUHelperTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -64,6 +75,7 @@ fun DSUHelperTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = Shapes,
         content = content,
     )
 }
