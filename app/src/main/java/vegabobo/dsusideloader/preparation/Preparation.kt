@@ -67,6 +67,7 @@ class Preparation(
                 "img" -> prepareImage(userSelectedFileUri)
                 "gz", "gzip" -> prepareGz(userSelectedFileUri)
                 "bz2", "bzip2" -> prepareBz2(userSelectedFileUri)
+                "lz4" -> prepareLz4(userSelectedFileUri)
                 "zip" -> prepareZip(userSelectedFileUri)
                 else -> throw Exception("Unsupported filetype")
             }
@@ -163,7 +164,7 @@ class Preparation(
         return Pair(uri, extractedFilePair.second)
     }
 
-    private fun prepareBz2(bz2File: Uri): Pair<Uri, Long> {
+private fun prepareBz2(bz2File: Uri): Pair<Uri, Long> {
         val outputFile = getFileName(bz2File)
         onStepUpdate(InstallationStep.DECOMPRESSING_BZ2)
         val imgFile = FileUnPacker(
@@ -175,8 +176,22 @@ class Preparation(
         ).unpack()
         return prepareImage(imgFile.first)
     }
+}
 
-    private fun extractFile(uri: Uri): Pair<Uri, Long> {
+private fun prepareLz4(lz4File: Uri): Pair<Uri, Long> {
+    val outputFile = getFileName(lz4File)
+    onStepUpdate(InstallationStep.DECOMPRESSING_LZ4)
+    val imgFile = FileUnPacker(
+        storageManager,
+        lz4File,
+        outputFile,
+        job,
+        onPreparationProgressUpdate,
+    ).unpack()
+    return prepareImage(imgFile.first)
+}
+
+private fun extractFile(uri: Uri): Pair<Uri, Long> {
         return extractFile(uri, "system")
     }
 

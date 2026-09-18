@@ -94,6 +94,14 @@ fun InstallationCardStep(
                 showProgressBar = true,
                 progress = uiState.installationProgress,
             )
+        InstallationStep.DECOMPRESSING_LZ4 ->
+            ProgressableCardContent(
+                text = stringResource(R.string.decompressing_lz4),
+                textSecondButton = stringResource(id = R.string.cancel),
+                onClickSecondButton = onClickCancelInstallation,
+                showProgressBar = true,
+                progress = uiState.installationProgress,
+            )
         InstallationStep.EXTRACTING_FILE ->
             ProgressableCardContent(
                 text = stringResource(R.string.extracting_file),
