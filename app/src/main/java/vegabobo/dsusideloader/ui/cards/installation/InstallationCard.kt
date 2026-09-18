@@ -40,6 +40,9 @@ fun InstallationCard(
         "application/x-gzip",
         "application/x-xz",
         "application/zip",
+        "application/x-bzip2",
+        "application/x-zstd",
+        "application/x-lz4",
         "application/octet-stream",
     )
     chooseFile.putExtra(Intent.EXTRA_MIME_TYPES, mimetypes)
