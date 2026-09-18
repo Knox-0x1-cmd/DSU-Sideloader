@@ -9,7 +9,11 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream
 import net.jpountz.lz4.LZ4FrameInputStream
 import org.tukaani.xz.XZInputStream
@@ -86,31 +90,42 @@ class FileUnPacker(
     }
 
     fun unpack(): Pair<Uri, Long> {
-        try {
-            val countingInputStream = CountingInputStream(inputStream)
-            val archiveInputStream =
-                with(storageManager.getFilenameFromUri(inputFile)) {
-                    when {
-                        endsWith("xz") -> XZInputStream(countingInputStream)
-                        endsWith("gz") -> GZIPInputStream(countingInputStream)
-                        endsWith("gzip") -> GZIPInputStream(countingInputStream)
-                        endsWith("bz2") -> BZip2CompressorInputStream(countingInputStream)
-                        endsWith("bzip2") -> BZip2CompressorInputStream(countingInputStream)
-                        endsWith("lz4") -> {
-                            try {
-                                LZ4FrameInputStream(countingInputStream)
-                            } catch (e: Exception) {
-                                Log.e("FileUnPacker", "LZ4 decompression failed: ${e.message}", e)
-                                throw Exception("LZ4 decompression failed. The file may be corrupted or use an unsupported LZ4 format (legacy/block format). Only standard LZ4 framed format is supported. Error: ${e.message}")
-                            }
-                        }
-                        else -> throw Exception("File type not supported")
-                    }
+        val progressScope = CoroutineScope(Dispatchers.IO)
+        val progressJob = progressScope.launch {
+            while (!installationJob.isCancelled) {
+                delay(200)
+                if (!installationJob.isCancelled) {
+                    updateProgress(inputFileSize, countingInputStream?.count ?: 0L)
                 }
+            }
+        }
+
+        val countingInputStream = CountingInputStream(inputStream)
+        val archiveInputStream: InputStream
+        try {
+            archiveInputStream = with(storageManager.getFilenameFromUri(inputFile)) {
+                when {
+                    endsWith("xz") -> XZInputStream(countingInputStream)
+                    endsWith("gz") -> GZIPInputStream(countingInputStream)
+                    endsWith("gzip") -> GZIPInputStream(countingInputStream)
+                    endsWith("bz2") -> BZip2CompressorInputStream(countingInputStream)
+                    endsWith("bzip2") -> BZip2CompressorInputStream(countingInputStream)
+                    endsWith("lz4") -> {
+                        try {
+                            net.jpountz.lz4.LZ4FrameInputStream(countingInputStream)
+                        } catch (e: Exception) {
+                            Log.e("FileUnPacker", "LZ4 decompression failed: ${e.message}", e)
+                            throw Exception("LZ4 decompression failed. The file may be corrupted or use an unsupported LZ4 format (legacy/block format). Only standard LZ4 framed format is supported. Error: ${e.message}")
+                        }
+                    }
+                    else -> throw Exception("File type not supported")
+                }
+            }
             copy(archiveInputStream, outputStream) {
                 updateProgress(inputFileSize, countingInputStream.count)
             }
         } finally {
+            progressJob.cancel()
             closeQuietly(inputStream)
             closeQuietly(outputStream)
         }
@@ -126,7 +141,7 @@ class FileUnPacker(
     }
 
     private fun updateProgress(fileSize: Long, readed: Long) {
-        val percent: Float = readed.toFloat() / fileSize.toFloat()
-        onProgressChange(percent)
+        val percent: Float = if (fileSize > 0) readed.toFloat() / fileSize.toFloat() else 0f
+        onProgressChange(percent.coerceIn(0f, 1f))
     }
 }
