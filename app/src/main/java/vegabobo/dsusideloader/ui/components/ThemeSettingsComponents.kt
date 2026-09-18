@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.height
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,9 +54,7 @@ fun ColorPickerRow(
             Surface(
                 shape = CircleShape,
                 color = color,
-                modifier = Modifier
-                    .width(24.dp)
-                    .height(24.dp)
+                modifier = Modifier.size(24.dp)
             ) {}
             IconButton(onClick = onColorClick) {
                 Icon(

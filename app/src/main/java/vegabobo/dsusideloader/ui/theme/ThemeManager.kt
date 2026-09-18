@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.edit
 import vegabobo.dsusideloader.preferences.AppPrefs
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -42,12 +43,12 @@ object ThemeManager {
     fun resetTheme(dataStore: DataStore<Preferences>) {
         ThemeConfig.resetToDefaults()
         runBlocking {
-            dataStore.edit { preferences ->
-                preferences[intPreferencesKey(AppPrefs.THEME_COLOR_SCHEME)] = 0
-                preferences[longPreferencesKey(AppPrefs.THEME_PRIMARY_COLOR)] = ThemeConfig.DefaultColors.primaryLight.value.toLong()
-                preferences[longPreferencesKey(AppPrefs.THEME_SECONDARY_COLOR)] = ThemeConfig.DefaultColors.secondaryLight.value.toLong()
-                preferences[longPreferencesKey(AppPrefs.THEME_TERTIARY_COLOR)] = ThemeConfig.DefaultColors.tertiaryLight.value.toLong()
-                preferences[intPreferencesKey(AppPrefs.THEME_CORNER_RADIUS)] = 28
+            dataStore.edit { prefs ->
+                prefs[intPreferencesKey(AppPrefs.THEME_COLOR_SCHEME)] = 0
+                prefs[longPreferencesKey(AppPrefs.THEME_PRIMARY_COLOR)] = ThemeConfig.DefaultColors.primaryLight.value.toLong()
+                prefs[longPreferencesKey(AppPrefs.THEME_SECONDARY_COLOR)] = ThemeConfig.DefaultColors.secondaryLight.value.toLong()
+                prefs[longPreferencesKey(AppPrefs.THEME_TERTIARY_COLOR)] = ThemeConfig.DefaultColors.tertiaryLight.value.toLong()
+                prefs[intPreferencesKey(AppPrefs.THEME_CORNER_RADIUS)] = 28
             }
         }
     }
