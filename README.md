@@ -1,9 +1,10 @@
 # DSU Sideloader
 
 A simple app to help users easily install GSIs via DSU's Android feature.
+
 <div>
-<img src="https://raw.githubusercontent.com/Knox-0x1-cmd/DSU-Sideloader/main/other/preview_1.png" alt="preview" width="200"/>  
-<img src="https://raw.githubusercontent.com/Knox-0x1-cmd/DSU-Sideloader/main/other/preview_2.png" alt="preview" width="200"/>  
+<img src="https://raw.githubusercontent.com/Knox-0x1-cmd/DSU-Sideloader/main/other/preview_1.png" alt="preview" width="200"/>
+<img src="https://raw.githubusercontent.com/Knox-0x1-cmd/DSU-Sideloader/main/other/preview_2.png" alt="preview" width="200"/>
 </div>
 
 ## Requirements
@@ -20,12 +21,10 @@ Google GSIs: https://developer.android.com/topic/generic-system-image/releases
 
 ## Downloads
 
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-     alt="Get it on F-Droid"
-     height="80">](https://f-droid.org/packages/vegabobo.dsusideloader/)
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/vegabobo.dsusideloader/)
 
 Or download the latest APK from the [Releases Section](https://github.com/Knox-0x1-cmd/DSU-Sideloader/releases/latest).
-For testing builds, you can check artifacts at [Actions](https://github.com/Knox-0x1-cmd/DSU-Sideloader/actions) tab
+For testing builds, check artifacts at [Actions](https://github.com/Knox-0x1-cmd/DSU-Sideloader/actions) tab.
 
 ## What's New in v2.04
 
@@ -67,7 +66,7 @@ DSU Sideloader automatically picks the best available mode (priority order):
 2. **Shizuku**: Same as ADB but no ADB command needed; tracks progress; diagnostics
 3. **Root**: All Shizuku features + DynamicSystem API (check/install/discard DSU) + built-in installer
 4. **System** (Magisk module): All Shizuku features + SELinux fixes + custom gsid binary
-6. **System+Root** (Magisk module + root): All features combined
+5. **System+Root** (Magisk module + root): All features combined
 
 **Notes:**
 - ¹ Requires READ_LOGS permission
