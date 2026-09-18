@@ -157,10 +157,4 @@ dependencies {
 }
 
 tasks {
-    "preBuild" {
-        dependsOn("lintKotlin")
-    }
-    "lintKotlin" {
-        dependsOn("formatKotlin")
-    }
 }
