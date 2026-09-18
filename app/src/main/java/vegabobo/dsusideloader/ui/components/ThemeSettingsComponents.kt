@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,14 +61,14 @@ fun ColorPickerRow(
             ) {}
             IconButton(onClick = onColorClick) {
                 Icon(
-                    imageVector = androidx.compose.material.icons.filled.Palette,
+                    imageVector = Icons.Default.Filled.Palette,
                     contentDescription = stringResource(id = R.string.theme_primary_color),
                 )
             }
             if (showReset && resetColor != Color.Unspecified) {
                 IconButton(onClick = onResetClick) {
                     Icon(
-                        imageVector = androidx.compose.material.icons.filled.Restore,
+                        imageVector = Icons.Default.Filled.Restore,
                         contentDescription = stringResource(id = R.string.theme_reset),
                     )
                 }
