@@ -46,8 +46,6 @@
     <string name="decompressing_gz">Extracting gz file…</string>
     <string name="decompressing_xz">Extracting xz file…</string>
     <string name="decompressing_bz2">Extracting bz2 file…</string>
-    <string name="decompressing_zstd">Extracting zstd file…</string>
-    <string name="decompressing_lz4">Extracting lz4 file…</string>
     <string name="compressing_to_gz">Preparing image file…</string>
     <string name="extracting_file">Extracting file…</string>
     <string name="copying_file">Copying file…</string>

@@ -15,8 +15,6 @@ enum class InstallationStep {
     COMPRESSING_TO_GZ,
     DECOMPRESSING_GZIP,
     DECOMPRESSING_BZ2,
-    DECOMPRESSING_ZSTD,
-    DECOMPRESSING_LZ4,
     EXTRACTING_FILE,
 
     // Installation Steps

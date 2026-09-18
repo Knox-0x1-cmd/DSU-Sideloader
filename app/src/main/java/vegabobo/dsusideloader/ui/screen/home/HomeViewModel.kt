@@ -508,7 +508,7 @@ class HomeViewModel @Inject constructor(
         val extension = filename.substringAfterLast(".", "")
         val supportedFiles = arrayListOf(
             "gz", "xz", "img", "gzip",
-            "bz2", "bzip2", "zst", "zstd", "lz4"
+            "bz2", "bzip2"
         )
 
         // DSU packages (zip files), are only supported in R+

@@ -38,7 +38,7 @@ class Preparation(
                 )
             }
 
-            "xz", "gz", "gzip", "bz2", "bzip2", "zst", "zstd", "lz4" -> {
+            "xz", "gz", "gzip", "bz2", "bzip2" -> {
                 val result = extractFile(userSelectedFileUri)
                 DSUInstallationSource.SingleSystemImage(result.first, result.second)
             }
@@ -67,8 +67,6 @@ class Preparation(
                 "img" -> prepareImage(userSelectedFileUri)
                 "gz", "gzip" -> prepareGz(userSelectedFileUri)
                 "bz2", "bzip2" -> prepareBz2(userSelectedFileUri)
-                "zst", "zstd" -> prepareZstd(userSelectedFileUri)
-                "lz4" -> prepareLz4(userSelectedFileUri)
                 "zip" -> prepareZip(userSelectedFileUri)
                 else -> throw Exception("Unsupported filetype")
             }
@@ -171,32 +169,6 @@ class Preparation(
         val imgFile = FileUnPacker(
             storageManager,
             bz2File,
-            outputFile,
-            job,
-            onPreparationProgressUpdate,
-        ).unpack()
-        return prepareImage(imgFile.first)
-    }
-
-    private fun prepareZstd(zstdFile: Uri): Pair<Uri, Long> {
-        val outputFile = getFileName(zstdFile)
-        onStepUpdate(InstallationStep.DECOMPRESSING_ZSTD)
-        val imgFile = FileUnPacker(
-            storageManager,
-            zstdFile,
-            outputFile,
-            job,
-            onPreparationProgressUpdate,
-        ).unpack()
-        return prepareImage(imgFile.first)
-    }
-
-    private fun prepareLz4(lz4File: Uri): Pair<Uri, Long> {
-        val outputFile = getFileName(lz4File)
-        onStepUpdate(InstallationStep.DECOMPRESSING_LZ4)
-        val imgFile = FileUnPacker(
-            storageManager,
-            lz4File,
             outputFile,
             job,
             onPreparationProgressUpdate,
