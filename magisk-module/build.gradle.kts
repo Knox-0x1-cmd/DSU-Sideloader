@@ -5,9 +5,9 @@ plugins {
 tasks.register<Zip>("assembleMagiskModule") {
     val id = "dsu_sideloader"
     val name = "DSU Sideloader"
-    val author = "VegaBobo"
+    val author = "Knox"
     val description = "System mode for DSU Sideloader"
-    val updateJson = "https://raw.githubusercontent.com/VegaBobo/DSU-Sideloader/master/other/module_updater/updater_module_gsid.json"
+    val updateJson = "https://raw.githubusercontent.com/Knox-0x1-cmd/DSU-Sideloader/main/other/module_updater/updater_module_gsid.json"
 
     val versionCode: Int by rootProject.extra
     val versionName: String by rootProject.extra
