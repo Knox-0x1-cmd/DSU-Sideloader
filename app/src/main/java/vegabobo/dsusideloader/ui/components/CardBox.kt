@@ -8,14 +8,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -26,22 +23,22 @@ fun CardBox(
     isToggleChecked: Boolean = false,
     isToggleEnabled: Boolean = true,
     addPadding: Boolean = true,
-    cardColor: Color = MaterialTheme.colorScheme.inverseOnSurface,
+    cardColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.inverseOnSurface,
     onCheckedChange: ((Boolean) -> Unit) = {},
-    roundedCornerShape: RoundedCornerShape = RoundedCornerShape(10.dp),
+    shape: androidx.compose.ui.graphics.Shape = MaterialTheme.shapes.cornerMedium,
     content: @Composable (ColumnScope) -> Unit,
 ) {
     Box(
         modifier = if (addPadding) {
             Modifier
-                .clip(roundedCornerShape)
+                .clip(shape)
                 .background(cardColor)
                 .padding(all = 10.dp)
                 .padding(end = 4.dp, start = 4.dp)
                 .fillMaxWidth()
         } else {
             Modifier
-                .clip(roundedCornerShape)
+                .clip(shape)
                 .background(cardColor)
                 .fillMaxWidth()
         },
