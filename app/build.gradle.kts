@@ -125,7 +125,7 @@ dependencies {
     implementation(AndroidX.compose.material3)
     implementation(AndroidX.compose.material)
     implementation(AndroidX.compose.runtime.liveData)
-    implementation(AndroidX.compose.material.icons.extended)
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
     implementation(AndroidX.compose.ui.toolingPreview)
     implementation(AndroidX.compose.ui)
 
