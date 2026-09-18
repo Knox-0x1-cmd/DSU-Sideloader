@@ -1,6 +1,6 @@
 {
-  "version": "2.04",
+  "version": "2.06",
   "versionCode": 8,
-  "zipUrl": "https://github.com/Knox-0x1-cmd/DSU-Sideloader/releases/download/2.04/module_DSU_Sideloader-gsid.zip",
+  "zipUrl": "https://github.com/Knox-0x1-cmd/DSU-Sideloader/releases/download/v2.06/module_DSU_Sideloader-gsid.zip",
   "changelog": "https://raw.githubusercontent.com/Knox-0x1-cmd/DSU-Sideloader/main/other/module_updater/latest_changelog.md"
 }

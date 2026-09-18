@@ -9,8 +9,10 @@ object AppPrefs {
      * check AboutViewModel init
      */
     const val UPDATE_CHECK_URL =
-        "https://raw.githubusercontent.com/VegaBobo/DSU-Sideloader/master/other/updater.json"
-    const val AUTHOR_SIGN_DIGEST = "0da046eb480972124e2fe2251ebc5b19ea9e13d9"
+        "https://raw.githubusercontent.com/Knox-0x1-cmd/DSU-Sideloader/main/other/updater.json"
+    // Fallback: Android debug key SHA1 so debug/miniDebug builds enable the updater.
+    // Replace with your own release keystore's SHA1 when you start signing releases.
+    const val AUTHOR_SIGN_DIGEST = "5B4C256D6A9170BF4280C70263715A92691E62CF"
     const val USER_PREFERENCES = "user_preferences"
     const val BOOTLOADER_UNLOCKED_WARNING = "bootloader_unlocked_warning"
     const val SAF_PATH = "writable_path"

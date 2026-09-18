@@ -19,7 +19,7 @@ plugins {
 }
 
 val versionCode by extra { 8 }
-val versionName by extra { "2.03" }
+val versionName by extra { "2.06" }
 val packageName by extra { "vegabobo.dsusideloader" }
 
 task("clean") {

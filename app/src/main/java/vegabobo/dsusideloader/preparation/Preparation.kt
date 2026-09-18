@@ -229,5 +229,6 @@ class Preparation(
     private fun getExtension(uri: Uri): String {
         return storageManager.getFilenameFromUri(uri)
             .substringAfterLast(".", "")
+            .lowercase()
     }
 }

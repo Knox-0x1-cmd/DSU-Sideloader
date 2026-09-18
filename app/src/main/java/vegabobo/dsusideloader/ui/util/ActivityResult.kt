@@ -17,7 +17,7 @@ fun launcherAcResult(
         ActivityResultContracts.StartActivityForResult(),
     ) {
         if (it.resultCode == Activity.RESULT_OK) {
-            result(it.data!!.data!!)
+            it.data?.data?.let { uri -> result(uri) }
         }
     }
 }
