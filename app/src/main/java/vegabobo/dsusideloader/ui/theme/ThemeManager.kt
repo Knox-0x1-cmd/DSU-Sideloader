@@ -42,12 +42,12 @@ object ThemeManager {
     fun resetTheme(dataStore: DataStore<Preferences>) {
         ThemeConfig.resetToDefaults()
         runBlocking {
-            dataStore.edit { preferences ->
-                preferences[intPreferencesKey(AppPrefs.THEME_COLOR_SCHEME)] = 0
-                preferences[longPreferencesKey(AppPrefs.THEME_PRIMARY_COLOR)] = ThemeConfig.DefaultColors.primaryLight.value.toLong()
-                preferences[longPreferencesKey(AppPrefs.THEME_SECONDARY_COLOR)] = ThemeConfig.DefaultColors.secondaryLight.value.toLong()
-                preferences[longPreferencesKey(AppPrefs.THEME_TERTIARY_COLOR)] = ThemeConfig.DefaultColors.tertiaryLight.value.toLong()
-                preferences[intPreferencesKey(AppPrefs.THEME_CORNER_RADIUS)] = 28
+            dataStore.edit { mutablePreferences ->
+                mutablePreferences[intPreferencesKey(AppPrefs.THEME_COLOR_SCHEME)] = 0
+                mutablePreferences[longPreferencesKey(AppPrefs.THEME_PRIMARY_COLOR)] = ThemeConfig.DefaultColors.primaryLight.value.toLong()
+                mutablePreferences[longPreferencesKey(AppPrefs.THEME_SECONDARY_COLOR)] = ThemeConfig.DefaultColors.secondaryLight.value.toLong()
+                mutablePreferences[longPreferencesKey(AppPrefs.THEME_TERTIARY_COLOR)] = ThemeConfig.DefaultColors.tertiaryLight.value.toLong()
+                mutablePreferences[intPreferencesKey(AppPrefs.THEME_CORNER_RADIUS)] = 28
             }
         }
     }

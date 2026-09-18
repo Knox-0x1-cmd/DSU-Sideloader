@@ -109,9 +109,10 @@ fun Settings(
         Title(title = stringResource(id = R.string.theme_settings))
 
         // Color scheme selector - simple dropdown style
+        val currentColorScheme = uiState.intPreferences[AppPrefs.THEME_COLOR_SCHEME] ?: 0
         PreferenceItem(
             title = stringResource(id = R.string.theme_color_scheme),
-            description = when (uiState.intPreferences[AppPrefs.THEME_COLOR_SCHEME] ?: 0) {
+            description = when (currentColorScheme) {
                 0 -> stringResource(id = R.string.theme_color_scheme_system)
                 1 -> stringResource(id = R.string.theme_color_scheme_light)
                 2 -> stringResource(id = R.string.theme_color_scheme_dark)
@@ -119,8 +120,7 @@ fun Settings(
             },
             showToggle = false,
             onClick = {
-                val current = uiState.intPreferences[AppPrefs.THEME_COLOR_SCHEME] ?: 0
-                settingsViewModel.setIntPreference(AppPrefs.THEME_COLOR_SCHEME, (current + 1) % 3)
+                settingsViewModel.setIntPreference(AppPrefs.THEME_COLOR_SCHEME, (currentColorScheme + 1) % 3)
             },
         )
 
