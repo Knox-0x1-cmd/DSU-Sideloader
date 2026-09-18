@@ -11,10 +11,10 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ModalBottomSheetValue
-import androidx.compose.material3.Surface
+import androidx.compose.material3.ModalBottomSheetDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomBottomSheet(
     modifier: Modifier = Modifier,
@@ -39,8 +40,8 @@ fun CustomBottomSheet(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(
-        initialValue = ModalBottomSheetValue.Hidden,
-        confirmValueChange = { it != ModalBottomSheetValue.HalfExpanded },
+        initialValue = ModalBottomSheetDefaults.Hidden,
+        confirmValueChange = { it != ModalBottomSheetDefaults.HalfExpanded },
     )
 
     val isFirst = remember { mutableStateOf(true) }
@@ -48,7 +49,7 @@ fun CustomBottomSheet(
     LaunchedEffect(Unit) {
         snapshotFlow { sheetState.currentValue }
             .collect {
-                if (it == ModalBottomSheetValue.Hidden) {
+                if (it == ModalBottomSheetDefaults.Hidden) {
                     if (isFirst.value) {
                         sheetState.show()
                         isFirst.value = false
@@ -67,31 +68,31 @@ fun CustomBottomSheet(
     }
 
     ModalBottomSheet(
+        onDismissRequest = { coroutineScope.launch { sheetState.hide() } },
         sheetState = sheetState,
-        sheetContent = {
-            BottomSheetContent(
-                title = title,
-                icon = icon,
-            ) {
-                val insets = WindowInsets
-                    .systemBars
-                    .only(WindowInsetsSides.Vertical)
-                    .asPaddingValues()
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.End)
-                        .padding(end = 18.dp, start = 18.dp, bottom = insets.calculateBottomPadding() + 14.dp, top = 14.dp),
-                ) {
-                    content { sheetState.hide(); shouldCallOnDismiss.value = false; }
-                }
-            }
-        },
         sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        sheetBackgroundColor = MaterialTheme.colorScheme.background,
-    ) {}
+        containerColor = MaterialTheme.colorScheme.background,
+    ) {
+        BottomSheetContent(
+            title = title,
+            icon = icon,
+        ) {
+            val insets = WindowInsets
+                .systemBars
+                .only(WindowInsetsSides.Vertical)
+                .asPaddingValues()
+            Column(
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(end = 18.dp, start = 18.dp, bottom = insets.calculateBottomPadding() + 14.dp, top = 14.dp),
+            ) {
+                content { sheetState.hide(); shouldCallOnDismiss.value = false; }
+            }
+        }
+    }
 
     if (isFirst.value) {
-        Surface(
+        androidx.compose.material3.Surface(
             modifier = Modifier
                 .fillMaxSize()
                 .alpha(0F),
