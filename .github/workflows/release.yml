@@ -26,6 +26,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Validate Gradle wrapper
       uses: gradle/actions/wrapper-validation@v4
@@ -71,20 +73,25 @@ jobs:
     timeout-minutes: 30
 
     steps:
-    - name: Checkout
+    - name: Checkout with full history
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-    - name: Read changelog
-      id: changelog
+    - name: Get recent successful commits
+      id: commits
       run: |
-        CHANGELOG_FILE="other/module_updater/latest_changelog.md"
-        if [ -f "$CHANGELOG_FILE" ]; then
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          cat "$CHANGELOG_FILE" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+        TAG="${{ github.event.inputs.tag }}"
+        # Get commits since last tag (or last 20 commits if no previous tag)
+        LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        if [ -n "$LAST_TAG" ]; then
+          COMMITS=$(git log --oneline --no-merges $LAST_TAG..HEAD)
         else
-          echo "changelog=No changelog found" >> $GITHUB_OUTPUT
+          COMMITS=$(git log --oneline --no-merges -20)
         fi
+        echo "commits<<EOF" >> $GITHUB_OUTPUT
+        echo "$COMMITS" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Download Release APK
       uses: actions/download-artifact@v4
@@ -105,11 +112,12 @@ jobs:
         name: DSU Sideloader ${{ github.event.inputs.tag }}
         body: |
           ## DSU Sideloader ${{ github.event.inputs.tag }}
-          
-          ${{ steps.changelog.outputs.changelog }}
-          
+
+          ### Changes
+          ${{ steps.commits.outputs.commits }}
+
           ---
-          
+
           ### Build
           - Gradle 8.13
           - AGP 8.13.2
