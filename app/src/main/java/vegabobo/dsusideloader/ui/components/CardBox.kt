@@ -27,7 +27,7 @@ fun CardBox(
     addPadding: Boolean = true,
     cardColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.inverseOnSurface,
     onCheckedChange: ((Boolean) -> Unit) = {},
-    shape: Shape = MaterialTheme.shapes.medium,
+    shape: Shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
     content: @Composable (ColumnScope) -> Unit,
 ) {
     Box(
