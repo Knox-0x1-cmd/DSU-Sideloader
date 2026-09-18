@@ -31,6 +31,9 @@ import vegabobo.dsusideloader.util.OperationModeUtils
 class MainActivity : ComponentActivity(), Shizuku.OnRequestPermissionResultListener {
 
     @Inject
+    lateinit var session: Session
+
+    @Inject
     lateinit var dataStore: androidx.datastore.core.DataStore<androidx.datastore.preferences.core.Preferences>
 
     private val tag = this.javaClass.simpleName

@@ -7,13 +7,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,18 +58,17 @@ fun ColorPickerRow(
                 modifier = Modifier
                     .width(24.dp)
                     .height(24.dp)
-                    .fillMaxWidth()
             ) {}
             IconButton(onClick = onColorClick) {
                 Icon(
-                    imageVector = androidx.compose.material.icons.Icons.Filled.Palette,
+                    imageVector = Icons.Filled.Palette,
                     contentDescription = stringResource(id = R.string.theme_primary_color),
                 )
             }
             if (showReset && resetColor != Color.Unspecified) {
                 IconButton(onClick = onResetClick) {
                     Icon(
-                        imageVector = androidx.compose.material.icons.Icons.Filled.Restore,
+                        imageVector = Icons.Filled.Restore,
                         contentDescription = stringResource(id = R.string.theme_reset),
                     )
                 }
@@ -102,36 +103,5 @@ fun CornerRadiusSlider(
                 inactiveTickColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
             ),
         )
-    }
-}
-
-@Composable
-fun ColorSchemeSelector(
-    selectedIndex: Int,
-    onSelectedChange: (Int) -> Unit,
-) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        androidx.compose.material3.SegmentedButton(
-            selectedIndex = selectedIndex,
-            onClick = onSelectedChange,
-            modifier = Modifier.fillMaxWidth(),
-            singleChoice = true,
-        ) {
-            androidx.compose.material3.SegmentedButtonItem(
-                label = { Text(text = stringResource(id = R.string.theme_color_scheme_system)) },
-                icon = { Icon(androidx.compose.material.icons.Icons.Filled.PhoneAndroid, null) },
-                alwaysShowLabel = true,
-            )
-            androidx.compose.material3.SegmentedButtonItem(
-                label = { Text(text = stringResource(id = R.string.theme_color_scheme_light)) },
-                icon = { Icon(androidx.compose.material.icons.Icons.Filled.WbSunny, null) },
-                alwaysShowLabel = true,
-            )
-            androidx.compose.material3.SegmentedButtonItem(
-                label = { Text(text = stringResource(id = R.string.theme_color_scheme_dark)) },
-                icon = { Icon(androidx.compose.material.icons.Icons.Filled.NightlightRound, null) },
-                alwaysShowLabel = true,
-            )
-        }
     }
 }

@@ -1,8 +1,15 @@
 package vegabobo.dsusideloader.ui.screen.settings
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SegmentedButton
@@ -11,6 +18,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +39,7 @@ import vegabobo.dsusideloader.ui.components.TopBar
 import vegabobo.dsusideloader.ui.screen.Destinations
 import vegabobo.dsusideloader.util.OperationMode
 import vegabobo.dsusideloader.util.collectAsStateWithLifecycle
+import vegabobo.dsusideloader.ui.theme.ThemeConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -282,17 +291,17 @@ fun ColorSchemeSelector(
         ) {
             SegmentedButtonItem(
                 label = { Text(text = stringResource(id = R.string.theme_color_scheme_system)) },
-                icon = { Icon(androidx.compose.material.icons.Icons.Filled.PhoneAndroid, null) },
+                icon = { Icon(Icons.Filled.PhoneAndroid, null) },
                 alwaysShowLabel = true,
             )
             SegmentedButtonItem(
                 label = { Text(text = stringResource(id = R.string.theme_color_scheme_light)) },
-                icon = { Icon(androidx.compose.material.icons.Icons.Filled.WbSunny, null) },
+                icon = { Icon(Icons.Filled.WbSunny, null) },
                 alwaysShowLabel = true,
             )
             SegmentedButtonItem(
                 label = { Text(text = stringResource(id = R.string.theme_color_scheme_dark)) },
-                icon = { Icon(androidx.compose.material.icons.Icons.Filled.NightlightRound, null) },
+                icon = { Icon(Icons.Filled.NightlightRound, null) },
                 alwaysShowLabel = true,
             )
         }
@@ -306,22 +315,6 @@ fun ColorPickerBottomSheet(
     onDismiss: () -> Unit,
     onColorSelected: (Color) -> Unit,
 ) {
-    import androidx.compose.foundation.layout.Box
-    import androidx.compose.foundation.layout.Column
-    import androidx.compose.foundation.layout.Row
-    import androidx.compose.foundation.layout.fillMaxWidth
-    import androidx.compose.foundation.layout.padding
-    import androidx.compose.foundation.shape.CircleShape
-    import androidx.compose.material3.Button
-    import androidx.compose.material3.MaterialTheme
-    import androidx.compose.material3.Surface
-    import androidx.compose.material3.Text
-    import androidx.compose.runtime.Composable
-    import androidx.compose.ui.Alignment
-    import androidx.compose.ui.Modifier
-    import androidx.compose.ui.unit.dp
-    import androidx.compose.ui.unit.sp
-
     val materialColors = listOf(
         Color.Red, Color.Pink, Color.Purple, Color.DeepPurple,
         Color.Indigo, Color.Blue, Color.LightBlue, Color.Cyan,
@@ -330,9 +323,18 @@ fun ColorPickerBottomSheet(
         Color.Brown, Color.Grey, Color.BlueGrey,
     )
 
+    val sheetState = remember { androidx.compose.material3.rememberModalBottomSheetState() }
+
+    LaunchedEffect(Unit) {
+        sheetState.show()
+    }
+
     androidx.compose.material3.ModalBottomSheet(
-        sheetState = remember { androidx.compose.material3.rememberModalBottomSheetState() },
-        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        onDismissRequest = {
+            sheetState.hide()
+            onDismiss()
+        },
     ) {
         Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
             Row(
@@ -341,8 +343,8 @@ fun ColorPickerBottomSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(text = title, style = MaterialTheme.typography.titleLarge)
-                androidx.compose.material3.IconButton(onClick = onDismiss) {
-                    Icon(androidx.compose.material.icons.Icons.Filled.Close, "Close")
+                androidx.compose.material3.IconButton(onClick = { sheetState.hide(); onDismiss() }) {
+                    Icon(Icons.Filled.Close, "Close")
                 }
             }
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(top = 8.dp))
@@ -362,7 +364,7 @@ fun ColorPickerBottomSheet(
                                     .weight(1f)
                                     .fillMaxWidth(),
                             ) {
-                                androidx.compose.material3.Box(
+                                androidx.compose.foundation.layout.Box(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .clickable { onColorSelected(color) }
@@ -374,5 +376,5 @@ fun ColorPickerBottomSheet(
                 }
             }
         }
-    }.show()
+    }
 }
