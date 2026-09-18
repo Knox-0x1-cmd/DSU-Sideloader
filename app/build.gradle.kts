@@ -158,9 +158,9 @@ dependencies {
 
 tasks {
     "preBuild" {
-        dependsOn("ktlintCheck")
+        dependsOn("ktlint")
     }
-    "ktlintCheck" {
+    "ktlint" {
         dependsOn("ktlintFormat")
     }
 }
