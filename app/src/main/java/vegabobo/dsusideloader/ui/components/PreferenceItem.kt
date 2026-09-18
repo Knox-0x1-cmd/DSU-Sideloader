@@ -33,7 +33,7 @@ fun PreferenceItem(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = { onClick(isChecked) }, enabled = isEnabled)
+            .clickable(onClick = { onClick(!isChecked) }, enabled = isEnabled)
             .padding(
                 start = 17.dp,
                 end = 17.dp,
@@ -72,7 +72,7 @@ fun PreferenceItem(
             Switch(
                 checked = isChecked,
                 enabled = isEnabled,
-                onCheckedChange = { onClick(isChecked) },
+                onCheckedChange = { onClick(it) },
                 modifier = Modifier.padding(start = 8.dp),
             )
         }
