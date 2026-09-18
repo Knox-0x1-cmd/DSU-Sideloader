@@ -1,5 +1,3 @@
-package vegabobo.dsusideloader.ui.theme
-
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -39,11 +37,14 @@ private val LightColorScheme = lightColorScheme(
 )
 
 private val Shapes = Shapes(
-    cornerExtraSmall = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-    cornerSmall = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-    cornerMedium = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-    cornerLarge = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
-    cornerExtraLarge = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+    extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+    small = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+    medium = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+    large = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+    extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+    largeIncreased = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+    extraLargeIncreased = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+    extraExtraLarge = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
 )
 
 @Composable

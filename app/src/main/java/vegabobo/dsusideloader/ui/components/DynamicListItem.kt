@@ -17,7 +17,7 @@ fun DynamicListItem(
     }
     CardBox(
         addPadding = false,
-        roundedCornerShape = shape,
+        shape = shape,
     ) {
         content()
     }
