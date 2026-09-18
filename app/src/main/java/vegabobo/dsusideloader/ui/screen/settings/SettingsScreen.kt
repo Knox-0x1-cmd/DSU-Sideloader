@@ -119,10 +119,8 @@ fun Settings(
             },
             showToggle = false,
             onClick = {
-                settingsViewModel.setIntPreference(
-                    AppPrefs.THEME_COLOR_SCHEME,
-                    (uiState.intPreferences[AppPrefs.THEME_COLOR_SCHEME] ?: 0 + 1) % 3
-                )
+                val current = uiState.intPreferences[AppPrefs.THEME_COLOR_SCHEME] ?: 0
+                settingsViewModel.setIntPreference(AppPrefs.THEME_COLOR_SCHEME, (current + 1) % 3)
             },
         )
 
