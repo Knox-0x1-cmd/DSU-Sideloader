@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ModalBottomSheetDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,8 +44,8 @@ fun CustomBottomSheet(
     val shouldCallOnDismiss = remember { mutableStateOf(true) }
     LaunchedEffect(Unit) {
         snapshotFlow { sheetState.currentValue }
-            .collect {
-                if (it == ModalBottomSheetDefaults.Hidden) {
+            .collect { currentValue ->
+                if (!sheetState.isVisible) {
                     if (isFirst.value) {
                         sheetState.show()
                         isFirst.value = false
