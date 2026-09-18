@@ -27,7 +27,7 @@ For testing builds, check artifacts at [Actions](https://github.com/Knox-0x1-cmd
 1. Install app
 2. On first launch, grant read/write permission to a folder (used for temporary files like extracted GSIs)
 3. Select a GSI to install  
-   **Accepted formats**: `gz`, `xz`, `img`, `zip` (DSU packages only)
+   **Accepted formats**: `gz`, `xz`, `img`, `zip` , `lz4` , `bzip2` , `bz2` (DSU packages only)
 4. Customize installation if needed  
    - Adjust userdata size for dynamic system  
    - Image size is auto-calculated (manual override not recommended)
