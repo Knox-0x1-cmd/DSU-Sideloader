@@ -23,3 +23,14 @@
 
 # Kotlinx serialization runtime
 -keep class kotlinx.serialization.json.** { *; }
+
+# LZ4 (net.jpountz.lz4) - prevent R8 stripping
+-keep class net.jpountz.lz4.** { *; }
+-keep class net.jpountz.xxhash.** { *; }
+-keep class net.jpountz.util.** { *; }
+
+# Zstd (optional, if added later)
+-keep class org.zstd.** { *; }
+
+# BZip2 (commons-compress)
+-keep class org.apache.commons.compress.compressors.bzip2.** { *; }
