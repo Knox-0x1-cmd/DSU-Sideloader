@@ -22,7 +22,7 @@ android {
     val packageName: String by rootProject.extra
 
     namespace = packageName
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         this.applicationId = packageName
