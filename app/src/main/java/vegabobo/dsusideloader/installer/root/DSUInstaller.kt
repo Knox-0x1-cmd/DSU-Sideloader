@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import vegabobo.dsusideloader.model.DSUInstallationSource
 import vegabobo.dsusideloader.model.ImagePartition
@@ -127,13 +128,15 @@ class DSUInstaller(
         }
         publishProgress(0L, partitionSize, partition)
         var prevInstalledSize = 0L
-        while (job.isActive) {
-            val installedSize = installationProgress.bytes_processed
-            if (installedSize > prevInstalledSize + Constants.MIN_PROGRESS_TO_PUBLISH) {
-                prevInstalledSize = installedSize
-                publishProgress(installedSize, partitionSize, partition)
+        runBlocking {
+            while (job.isActive) {
+                val installedSize = installationProgress.bytes_processed
+                if (installedSize > prevInstalledSize + Constants.MIN_PROGRESS_TO_PUBLISH) {
+                    prevInstalledSize = installedSize
+                    publishProgress(installedSize, partitionSize, partition)
+                }
+                delay(100)
             }
-            delay(100)
         }
         if (!closePartition()) {
             Log.e(tag, "Failed to install $partition partition")
@@ -174,22 +177,21 @@ class DSUInstaller(
                     publishProgress(0L, partitionSize, partition)
                     var installedSize: Long = 0
                     val readBuffer = ByteArray(sharedMemory.size)
-                    val buffer = mappedBuffer.mBuffer
-                            ?: return@use
-                        var numBytesRead: Int
-                        while (0 < sis.read(readBuffer, 0, readBuffer.size)
-                                .also { numBytesRead = it }
-                        ) {
-                            if (installationJob.isCancelled) {
-                                closePartition()
-                                return@use
-                            }
-                            buffer.position(0)
-                            buffer.put(readBuffer, 0, numBytesRead)
-                            submitFromAshmem(numBytesRead.toLong())
-                            installedSize += numBytesRead.toLong()
-                            publishProgress(installedSize, partitionSize, partition)
+                    val buffer = mappedBuffer.mBuffer ?: return@use
+                    var numBytesRead: Int
+                    while (0 < sis.read(readBuffer, 0, readBuffer.size)
+                            .also { numBytesRead = it }
+                    ) {
+                        if (installationJob.isCancelled) {
+                            closePartition()
+                            return@use
                         }
+                        buffer.position(0)
+                        buffer.put(readBuffer, 0, numBytesRead)
+                        submitFromAshmem(numBytesRead.toLong())
+                        installedSize += numBytesRead.toLong()
+                        publishProgress(installedSize, partitionSize, partition)
+                    }
                     publishProgress(partitionSize, partitionSize, partition)
                 }
             }
