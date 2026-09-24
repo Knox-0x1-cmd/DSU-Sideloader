@@ -1,24 +1,25 @@
 package vegabobo.dsusideloader.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 
-// Dark theme colors (from user palette)
-val DarkBackground = Color(0xFF151713)
-val DarkSurface = Color(0xFF2B2E29)
-val DarkPrimary = Color(0xFF718268)
-val DarkOnSurface = Color(0xFFE6E2DA)
+val keyColorOptions = listOf(
+    Color(0xFFF44336).toArgb(),
+    Color(0xFFE91E63).toArgb(),
+    Color(0xFF9C27B0).toArgb(),
+    Color(0xFF673AB7).toArgb(),
+    Color(0xFF3F51B5).toArgb(),
+    Color(0xFF2196F3).toArgb(),
+    Color(0xFF00BCD4).toArgb(),
+    Color(0xFF009688).toArgb(),
+    Color(0xFF4CAF50).toArgb(),
+    Color(0xFFFFEB3B).toArgb(),
+    Color(0xFFFFC107).toArgb(),
+    Color(0xFFFF9800).toArgb(),
+    Color(0xFF795548).toArgb(),
+    Color(0xFF607D8F).toArgb(),
+    Color(0xFFFF9CA8).toArgb(),
+)
 
-// Light theme derived colors
-val LightBackground = Color(0xFFE6E2DA)
-val LightSurface = Color(0xFFF5F0E8)
-val LightPrimary = Color(0xFF5A6B4F)
-val LightOnSurface = Color(0xFF151713)
-
-// Legacy names for compatibility
-val Blue80 = DarkPrimary
-val BlueGrey80 = DarkSurface
-val Purplish80 = DarkOnSurface
-
-val Blue40 = LightPrimary
-val BlueGrey40 = LightSurface
-val Purplish40 = LightOnSurface
+// Fallback seed for Monet off (KSU uses primary of dynamic when keyColor=0)
+val defaultSeedColor = Color(0xFF2196F3)

@@ -159,6 +159,8 @@ implementation("com.mikepenz:aboutlibraries-core:_")
 
     implementation("org.lsposed.hiddenapibypass:hiddenapibypass:_")
 
+    implementation("com.materialkolor:material-kolor:_")
+
     compileOnly(project(":hidden-api-stub"))
 }
 

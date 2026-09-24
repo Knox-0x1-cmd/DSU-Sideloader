@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="#718268" />
+    <!-- KSU Material3 new theme: primary blue seed #2196F3 -->
+    <solid android:color="#2196F3" />
 </shape>

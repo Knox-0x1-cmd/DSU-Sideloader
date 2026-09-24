@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="background">#151713</color>
-    <color name="surface">#2B2E29</color>
-    <color name="system_accent">#718268</color>
-    <color name="system_accent_darker">#5A6B4F</color>
-    <color name="system_accent_soft">#5A6B4F</color>
-    <color name="system_accent_2">#718268</color>
-    <color name="netrual_color">#2B2E29</color>
-    <color name="error">#FFC1666B</color>
+    <color name="background">#121212</color>
+    <color name="surface">#1C1B1F</color>
+    <color name="system_accent">#2196F3</color>
+    <color name="system_accent_darker">#1976D2</color>
+    <color name="system_accent_soft">#0D47A1</color>
+    <color name="system_accent_2">#2196F3</color>
+    <color name="netrual_color">#1C1B1F</color>
+    <color name="error">#FFB4AB</color>
 </resources>
