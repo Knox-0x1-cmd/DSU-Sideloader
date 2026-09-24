@@ -93,17 +93,14 @@ jobs:
         echo "$COMMITS" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
 
-    - name: Download Release APK
-      uses: actions/download-artifact@v4
-      with:
-        name: outputs-apk-release
-        path: release-apk
-
     - name: Download MiniDebug APK
       uses: actions/download-artifact@v4
       with:
         name: outputs-apk-minidebug
         path: minidebug-apk
+
+    - name: Rename APK to release.apk
+      run: mv minidebug-apk/*.apk minidebug-apk/release.apk
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
@@ -123,8 +120,6 @@ jobs:
           - AGP 8.13.2
           - Kotlin 2.2.20
           - Compose 1.11.4
-        files: |
-          release-apk/*.apk
-          minidebug-apk/*.apk
+        files: minidebug-apk/release.apk
         draft: false
         prerelease: false
