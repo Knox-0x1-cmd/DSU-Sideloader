@@ -15,9 +15,6 @@ on:
         description: 'Tag name (required for release, e.g. v2.04)'
         required: false
         type: string
-  push:
-    tags:
-      - 'v*'
 
 permissions:
   contents: write
@@ -50,16 +47,28 @@ jobs:
     - name: Build Release APK
       run: ./gradlew assembleRelease
 
+    - name: Build MiniDebug APK
+      run: ./gradlew assembleMiniDebug
+
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
       with:
-        name: app-release
+        name: outputs-apk-release
         path: app/build/outputs/apk/release
+        if-no-files-found: error
+        retention-days: 30
+
+    - name: Upload MiniDebug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: outputs-apk-minidebug
+        path: app/build/outputs/apk/miniDebug
+        if-no-files-found: error
         retention-days: 30
 
   release:
     needs: build
-    if: github.event_name == 'push' || github.event.inputs.type == 'release'
+    if: github.event.inputs.type == 'release'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -73,9 +82,7 @@ jobs:
       id: commits
       run: |
         TAG="${{ github.event.inputs.tag }}"
-        if [ -z "$TAG" ]; then
-          TAG="${{ github.ref_name }}"
-        fi
+        # Get commits since last tag (or last 20 commits if no previous tag)
         LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
         if [ -n "$LAST_TAG" ]; then
           COMMITS=$(git log --oneline --no-merges $LAST_TAG..HEAD)
@@ -89,16 +96,22 @@ jobs:
     - name: Download Release APK
       uses: actions/download-artifact@v4
       with:
-        name: app-release
+        name: outputs-apk-release
         path: release-apk
+
+    - name: Download MiniDebug APK
+      uses: actions/download-artifact@v4
+      with:
+        name: outputs-apk-minidebug
+        path: minidebug-apk
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-        name: DSU Sideloader ${{ github.event.inputs.tag || github.ref_name }}
+        tag_name: ${{ github.event.inputs.tag }}
+        name: DSU Sideloader ${{ github.event.inputs.tag }}
         body: |
-          ## DSU Sideloader ${{ github.event.inputs.tag || github.ref_name }}
+          ## DSU Sideloader ${{ github.event.inputs.tag }}
 
           ### Changes
           ${{ steps.commits.outputs.commits }}
@@ -110,6 +123,8 @@ jobs:
           - AGP 8.13.2
           - Kotlin 2.2.20
           - Compose 1.11.4
-        files: release-apk/*.apk
+        files: |
+          release-apk/*.apk
+          minidebug-apk/*.apk
         draft: false
         prerelease: false

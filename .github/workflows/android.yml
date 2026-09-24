@@ -5,19 +5,9 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch:
-    inputs:
-      build_type:
-        description: 'Build type'
-        required: false
-        default: 'release'
-        type: choice
-        options:
-          - release
-          - miniDebug
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,6 +15,7 @@ concurrency:
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -46,21 +37,13 @@ jobs:
     - name: Set up Gradle
       uses: gradle/actions/setup-gradle@v4
 
-    - name: Build Release APK
-      run: ./gradlew assembleRelease
+    - name: Build with Gradle
+      run: ./gradlew assembleMiniDebug
 
-    - name: Upload Release APK
+    - name: Archive artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: app-release
-        path: app/build/outputs/apk/release
-        retention-days: 30
-
-    - name: Create Release (on tag push)
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v2
-      with:
-        files: app-release.apk
-        generate_release_notes: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        name: outputs-apk-minidebug
+        path: app/build/outputs/apk/miniDebug
+        if-no-files-found: error
+        retention-days: 7
