@@ -50,22 +50,11 @@ jobs:
     - name: Build Release APK
       run: ./gradlew assembleRelease
 
-    - name: Rename APK to app-release.apk
-      run: |
-        APK_PATH=$(find app/build/outputs/apk -name "*.apk" -not -name "*unaligned*" -not -name "*unsigned*" | head -1)
-        if [ -n "$APK_PATH" ]; then
-          cp "$APK_PATH" app-release.apk
-          echo "Copied $APK_PATH to app-release.apk"
-        else
-          echo "No APK found"
-          exit 1
-        fi
-
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
       with:
         name: app-release
-        path: app-release.apk
+        path: app/build/outputs/apk/release
         retention-days: 30
 
   release:
@@ -121,6 +110,6 @@ jobs:
           - AGP 8.13.2
           - Kotlin 2.2.20
           - Compose 1.11.4
-        files: release-apk/app-release.apk
+        files: release-apk/*.apk
         draft: false
         prerelease: false
