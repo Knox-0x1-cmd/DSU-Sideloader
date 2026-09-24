@@ -146,16 +146,28 @@ class LogcatDiagnostic(
             if (it.contains("IN_PROGRESS")) {
                 if (it.contains("progress:") && it.contains("partition name:")) {
                     try {
-                        val progressRgx = "(progress: )([\\d+/]+)".toRegex()
-                        val partitionRgx = "(partition name: ([a-z+_]+))".toRegex()
+                        val progressRgx = "progress:\\s*([\\d]+)/([\\d]+)".toRegex()
+                        val partitionRgx = "partition name:\\s*([a-zA-Z0-9_]+)".toRegex()
 
-                        val progressText = progressRgx.find(it)!!.groupValues[2].split("/")
-                        val progress = (progressText[0].toFloat() / progressText[1].toFloat())
+                        val progressMatch = progressRgx.find(it)
+                        val partitionMatch = partitionRgx.find(it)
 
-                        val partitionText = partitionRgx.find(it)!!.groupValues[2]
+                        if (progressMatch != null && partitionMatch != null) {
+                            val current = progressMatch.groupValues[1].toLongOrNull()
+                            val total = progressMatch.groupValues[2].toLongOrNull()
+                            val partitionText = partitionMatch.groupValues[1]
 
-                        onInstallationProgressUpdate(progress, partitionText)
-                    } catch (_: Exception) {
+                            if (current != null && total != null && total > 0) {
+                                val progress = current.toFloat() / total.toFloat()
+                                onInstallationProgressUpdate(progress.coerceIn(0f, 1f), partitionText)
+                            } else {
+                                onStepUpdate(InstallationStep.PROCESSING_LOG_READABLE)
+                            }
+                        } else {
+                            onStepUpdate(InstallationStep.PROCESSING_LOG_READABLE)
+                        }
+                    } catch (e: Exception) {
+                        Log.w(tag, "Failed to parse progress: $e")
                         onStepUpdate(InstallationStep.PROCESSING_LOG_READABLE)
                     }
                 } else {

@@ -13,62 +13,62 @@ open class DynamicSystemImpl : IDynamicSystemService {
     }
 
     override fun getInstallationProgress(): GsiProgress {
-        return PrivilegedProvider.getService().installationProgress
+        return PrivilegedProvider.getServiceBlocking().installationProgress
     }
 
     override fun abort(): Boolean {
-        return PrivilegedProvider.getService().abort()
+        return PrivilegedProvider.getServiceBlocking().abort()
     }
 
     override fun isInUse(): Boolean {
-        return PrivilegedProvider.getService().isInUse
+        return PrivilegedProvider.getServiceBlocking().isInUse
     }
 
     override fun isInstalled(): Boolean {
-        return PrivilegedProvider.getService().isInstalled
+        return PrivilegedProvider.getServiceBlocking().isInstalled
     }
 
     override fun isEnabled(): Boolean {
-        return PrivilegedProvider.getService().isEnabled
+        return PrivilegedProvider.getServiceBlocking().isEnabled
     }
 
     override fun remove(): Boolean {
-        return PrivilegedProvider.getService().remove()
+        return PrivilegedProvider.getServiceBlocking().remove()
     }
 
     override fun setEnable(enable: Boolean, oneShot: Boolean): Boolean {
-        return PrivilegedProvider.getService().setEnable(enable, oneShot)
+        return PrivilegedProvider.getServiceBlocking().setEnable(enable, oneShot)
     }
 
     override fun finishInstallation(): Boolean {
-        return PrivilegedProvider.getService().finishInstallation()
+        return PrivilegedProvider.getServiceBlocking().finishInstallation()
     }
 
     override fun startInstallation(dsuSlot: String): Boolean {
-        return PrivilegedProvider.getService().startInstallation(dsuSlot)
+        return PrivilegedProvider.getServiceBlocking().startInstallation(dsuSlot)
     }
 
     override fun createPartition(name: String, size: Long, readOnly: Boolean): Int {
-        return PrivilegedProvider.getService().createPartition(name, size, readOnly)
+        return PrivilegedProvider.getServiceBlocking().createPartition(name, size, readOnly)
     }
 
     override fun closePartition(): Boolean {
-        return PrivilegedProvider.getService().closePartition()
+        return PrivilegedProvider.getServiceBlocking().closePartition()
     }
 
     override fun setAshmem(fd: ParcelFileDescriptor, size: Long): Boolean {
-        return PrivilegedProvider.getService().setAshmem(fd, size)
+        return PrivilegedProvider.getServiceBlocking().setAshmem(fd, size)
     }
 
     override fun submitFromAshmem(bytes: Long): Boolean {
-        return PrivilegedProvider.getService().submitFromAshmem(bytes)
+        return PrivilegedProvider.getServiceBlocking().submitFromAshmem(bytes)
     }
 
     override fun suggestScratchSize(): Long {
-        return PrivilegedProvider.getService().suggestScratchSize()
+        return PrivilegedProvider.getServiceBlocking().suggestScratchSize()
     }
 
     fun forceStopDSU() {
-        PrivilegedProvider.getService().forceStopPackage("com.android.dynsystem")
+        PrivilegedProvider.getServiceBlocking().forceStopPackage("com.android.dynsystem")
     }
 }

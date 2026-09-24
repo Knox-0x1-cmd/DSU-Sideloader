@@ -37,22 +37,40 @@ object PrivilegedProvider {
         }
     }
 
-    // Blocking
-    fun getService(): IPrivilegedService {
+    // Non-blocking version for coroutine contexts
+    suspend fun getService(): IPrivilegedService {
         var timeout = 0
         while (connection.SERVICE == null) {
             timeout += 1000
             if (timeout > 20000) {
                 throw Exception("Service unavailable.")
             }
-            Thread.sleep(1000)
+            delay(1000)
         }
         return connection.SERVICE ?: throw Exception("Service unavailable.")
     }
 
-    // Blocking
-    fun isRoot(): Boolean {
-        return this.getService().uid == 0
+    suspend fun isRoot(): Boolean {
+        val service = getService()
+        return service.uid == 0
+    }
+
+    // Blocking version for non-coroutine contexts (used by DynamicSystemImpl)
+    // Uses short sleep intervals to remain responsive
+    fun getServiceBlocking(): IPrivilegedService {
+        var timeout = 0
+        while (connection.SERVICE == null) {
+            timeout += 100
+            if (timeout > 20000) {
+                throw Exception("Service unavailable.")
+            }
+            Thread.sleep(100)
+        }
+        return connection.SERVICE ?: throw Exception("Service unavailable.")
+    }
+
+    fun isRootBlocking(): Boolean {
+        return getServiceBlocking().uid == 0
     }
 
     fun isConnected(): Boolean {

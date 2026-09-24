@@ -20,20 +20,25 @@ class InstallationCmdline(
 
         var arguments = ""
 
-        arguments += addArgument("-d", gsiFileAbsolutePath)
-        arguments += addArgument("--el", "KEY_USERDATA_SIZE", userdataSize)
+        arguments += addArgument("-d", shellEscape(gsiFileAbsolutePath))
+        arguments += addArgument("--el", "KEY_USERDATA_SIZE", userdataSize.toString())
         if (imageFileSize != DSUConstants.DEFAULT_IMAGE_SIZE) {
-            arguments += addArgument("--el", "KEY_SYSTEM_SIZE", imageFileSize)
+            arguments += addArgument("--el", "KEY_SYSTEM_SIZE", imageFileSize.toString())
         }
 
         return arguments.trim()
     }
 
-    private fun addArgument(argument: String, property: String, value: Any?): String {
+    private fun addArgument(argument: String, property: String, value: String): String {
         return "$argument $property $value "
     }
 
-    private fun addArgument(argument: String, value: Any?): String {
+    private fun addArgument(argument: String, value: String): String {
         return "$argument $value "
+    }
+
+    private fun shellEscape(input: String): String {
+        // Escape single quotes by closing the quote, adding escaped quote, reopening
+        return "'${input.replace("'", "'\\''")}'"
     }
 }

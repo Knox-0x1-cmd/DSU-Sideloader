@@ -5,6 +5,7 @@ import androidx.documentfile.provider.DocumentFile
 import android.util.Log
 import java.io.Closeable
 import java.io.FilterInputStream
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.zip.GZIPInputStream
@@ -27,11 +28,16 @@ class FileUnPacker(
     private val onProgressChange: (Float) -> Unit,
 ) {
 
-    private var finalFile: DocumentFile = storageManager.createDocumentFile(outputFile)
+    private val finalFile: DocumentFile = storageManager.createDocumentFile(outputFile)
 
-    private var outputStream = storageManager.openOutputStream(finalFile.uri)
-    private var inputStream = storageManager.openInputStream(inputFile)
-    private val inputFileSize = storageManager.getFilesizeFromUri(inputFile)
+    private var outputStream: OutputStream? = null
+    private var inputStream: InputStream? = null
+    private val inputFileSize: Long = storageManager.getFilesizeFromUri(inputFile)
+
+    init {
+        outputStream = storageManager.openOutputStream(finalFile.uri)
+        inputStream = storageManager.openInputStream(inputFile)
+    }
 
     private class CountingInputStream(stream: InputStream) : FilterInputStream(stream) {
         var count: Long = 0
@@ -64,34 +70,49 @@ class FileUnPacker(
         val buffer = ByteArray(8 * 1024)
         var n: Int
         var readed: Long = 0
-        while (-1 != inputStr.read(buffer)
-                .also { n = it } && !installationJob.isCancelled
-        ) {
+        while (inputStr.read(buffer).also { n = it } != -1 && !installationJob.isCancelled) {
             readed += n
             onReadedBuffer(readed)
             outputStr.write(buffer, 0, n)
         }
-        inputStr.close()
-        outputStr.flush()
-        outputStr.close()
+        try {
+            inputStr.close()
+        } catch (e: IOException) {
+            Log.w("FileUnPacker", "Failed to close input stream", e)
+        }
+        try {
+            outputStr.flush()
+            outputStr.close()
+        } catch (e: IOException) {
+            Log.w("FileUnPacker", "Failed to flush/close output stream", e)
+        }
     }
 
     fun pack(): Pair<Uri, Long> {
+        val outStream = outputStream
+        val inStream = inputStream
+        if (outStream == null || inStream == null) {
+            throw IllegalStateException("Streams not initialized")
+        }
         try {
-            copy(inputStream, GZIPOutputStream(outputStream)) {
+            copy(inStream, GZIPOutputStream(outStream)) {
                 updateProgress(inputFileSize, it)
             }
         } finally {
-            closeQuietly(inputStream)
-            closeQuietly(outputStream)
+            closeQuietly(inStream)
+            closeQuietly(outStream)
         }
         val fileLength = storageManager.getFilesizeFromUri(finalFile.uri)
         return Pair(finalFile.uri, fileLength)
     }
 
     fun unpack(): Pair<Uri, Long> {
-        val countingInputStream = CountingInputStream(inputStream)
-        val archiveInputStream: InputStream
+        val inStream = inputStream
+            ?: throw IllegalStateException("Input stream not initialized")
+        val outStream = outputStream
+            ?: throw IllegalStateException("Output stream not initialized")
+
+        val countingInputStream = CountingInputStream(inStream)
         val progressJob = CoroutineScope(installationJob + Dispatchers.IO).launch {
             while (!installationJob.isCancelled) {
                 delay(200)
@@ -101,7 +122,7 @@ class FileUnPacker(
             }
         }
         try {
-            archiveInputStream = with(storageManager.getFilenameFromUri(inputFile).lowercase()) {
+            val archiveInputStream = with(storageManager.getFilenameFromUri(inputFile).lowercase()) {
                 when {
                     endsWith("xz") -> XZInputStream(countingInputStream)
                     endsWith("gz") -> GZIPInputStream(countingInputStream)
@@ -119,22 +140,24 @@ class FileUnPacker(
                     else -> throw Exception("File type not supported")
                 }
             }
-            copy(archiveInputStream, outputStream) {
+            copy(archiveInputStream, outStream) {
                 updateProgress(inputFileSize, countingInputStream.count)
             }
         } finally {
             progressJob.cancel()
-            closeQuietly(inputStream)
-            closeQuietly(outputStream)
+            closeQuietly(inStream)
+            closeQuietly(outStream)
         }
         val fileLength = storageManager.getFilesizeFromUri(finalFile.uri)
         return Pair(finalFile.uri, fileLength)
     }
 
-    private fun closeQuietly(stream: Closeable) {
+    private fun closeQuietly(stream: Closeable?) {
+        if (stream == null) return
         try {
             stream.close()
-        } catch (_: Exception) {
+        } catch (e: IOException) {
+            Log.w("FileUnPacker", "Failed to close stream: ${stream.javaClass.simpleName}", e)
         }
     }
 

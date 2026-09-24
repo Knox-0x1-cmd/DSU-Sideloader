@@ -156,8 +156,15 @@ public class SparseInputStream extends InputStream {
                 mLeft -= n;
                 return n;
             case SparseChunk.FILL:
-                // The FILL type is rarely used, so use a simple implmentation.
-                return super.read(buf, off, len);
+                // FILL chunk: fill the buffer with the 4-byte pattern
+                n = (int) min(mLeft, len);
+                if (mCur.fill != null && mCur.fill.length == 4) {
+                    for (int i = 0; i < n; i++) {
+                        buf[off + i] = mCur.fill[i & 0x3];
+                    }
+                }
+                mLeft -= n;
+                return n;
             default:
                 throw new IOException("Unsupported Chunk:" + mCur.toString());
         }

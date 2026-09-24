@@ -21,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import vegabobo.dsusideloader.model.DSUInstallationSource
 import vegabobo.dsusideloader.model.ImagePartition
@@ -134,7 +133,7 @@ class DSUInstaller(
                 prevInstalledSize = installedSize
                 publishProgress(installedSize, partitionSize, partition)
             }
-            runBlocking { delay(100) }
+            delay(100)
         }
         if (!closePartition()) {
             Log.e(tag, "Failed to install $partition partition")
@@ -176,20 +175,21 @@ class DSUInstaller(
                     var installedSize: Long = 0
                     val readBuffer = ByteArray(sharedMemory.size)
                     val buffer = mappedBuffer.mBuffer
-                    var numBytesRead: Int
-                    while (0 < sis.read(readBuffer, 0, readBuffer.size)
-                            .also { numBytesRead = it }
-                    ) {
-                        if (installationJob.isCancelled) {
-                            closePartition()
-                            return
+                            ?: return@use
+                        var numBytesRead: Int
+                        while (0 < sis.read(readBuffer, 0, readBuffer.size)
+                                .also { numBytesRead = it }
+                        ) {
+                            if (installationJob.isCancelled) {
+                                closePartition()
+                                return@use
+                            }
+                            buffer.position(0)
+                            buffer.put(readBuffer, 0, numBytesRead)
+                            submitFromAshmem(numBytesRead.toLong())
+                            installedSize += numBytesRead.toLong()
+                            publishProgress(installedSize, partitionSize, partition)
                         }
-                        buffer!!.position(0)
-                        buffer.put(readBuffer, 0, numBytesRead)
-                        submitFromAshmem(numBytesRead.toLong())
-                        installedSize += numBytesRead.toLong()
-                        publishProgress(installedSize, partitionSize, partition)
-                    }
                     publishProgress(partitionSize, partitionSize, partition)
                 }
             }
@@ -258,7 +258,7 @@ class DSUInstaller(
     }
 
     private fun startInstallation() {
-        PrivilegedProvider.getService().setDynProp()
+        PrivilegedProvider.getServiceBlocking().setDynProp()
         if (isInUse) {
             onInstallationError(InstallationStep.ERROR_ALREADY_RUNNING_DYN_OS, "")
             return

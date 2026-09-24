@@ -41,13 +41,14 @@ class StorageManager(
 
     fun arePermissionsGrantedToFolder(path: String): Boolean {
         val foldersUriPermissions = appContext.contentResolver.persistedUriPermissions
+        val targetUri = Uri.parse(path)
         for (folder in foldersUriPermissions) {
-            val persistedUriString = folder.uri.toString()
-            if (path == persistedUriString) {
+            if (UriUtils.areSameUri(targetUri, folder.uri)) {
                 // If folder with granted permissions doesn't exists
                 // (eg. user deleted folder, or apk data restored externally from a backup)
                 // then, we should ask user to grant permissions to a folder again
-                if (!DocumentFile.fromTreeUri(appContext, folder.uri)!!.exists()) {
+                val docFile = DocumentFile.fromTreeUri(appContext, folder.uri)
+                if (docFile == null || !docFile.exists()) {
                     return false
                 }
 
@@ -65,6 +66,14 @@ class StorageManager(
             }
         }
         return false
+    }
+
+    private object UriUtils {
+        fun areSameUri(uri1: Uri, uri2: Uri): Boolean {
+            if (uri1.scheme != uri2.scheme) return false
+            if (uri1.authority != uri2.authority) return false
+            return uri1.path == uri2.path
+        }
     }
 
     // Create/obtains a subfolder localized in path selected by user
@@ -98,22 +107,19 @@ class StorageManager(
     }
 
     private fun copyFileToSafFolder(inputFile: Uri): Uri {
-        val clone: DocumentFile = createDocumentFile(getFilenameFromUri(inputFile))
+        val clone = createDocumentFile(getFilenameFromUri(inputFile))
         val inputStream = openInputStream(inputFile)
         val outputStream = openOutputStream(clone.uri)
         try {
             val buffer = ByteArray(8 * 1024)
-            while (true) {
-                val readBytes = inputStream.read(buffer)
-                if (readBytes == -1) {
-                    break
-                }
+            var readBytes: Int
+            while (inputStream.read(buffer).also { readBytes = it } != -1) {
                 outputStream.write(buffer, 0, readBytes)
             }
             outputStream.flush()
         } finally {
-            inputStream.close()
-            outputStream.close()
+            try { inputStream.close() } catch (_: Exception) {}
+            try { outputStream.close() } catch (_: Exception) {}
         }
         return clone.uri
     }
@@ -137,7 +143,9 @@ class StorageManager(
     }
 
     fun writeStringToUri(content: String, uri: Uri): String {
-        appContext.contentResolver.openOutputStream(uri)!!.use { it.write(content.toByteArray()) }
+        appContext.contentResolver.openOutputStream(uri)
+            .use { it?.write(content.toByteArray()) }
+            ?: throw IOException("Failed to open output stream for $uri")
         return FilenameUtils.getFilePath(uri, false).replace("file://", "")
     }
 
@@ -155,15 +163,18 @@ class StorageManager(
     }
 
     fun openInputStream(uri: Uri): InputStream {
-        return appContext.contentResolver.openInputStream(uri)!!
+        return appContext.contentResolver.openInputStream(uri)
+            ?: throw IOException("Failed to open input stream for $uri")
     }
 
     fun openOutputStream(uri: Uri): OutputStream {
-        return appContext.contentResolver.openOutputStream(uri)!!
+        return appContext.contentResolver.openOutputStream(uri)
+            ?: throw IOException("Failed to open output stream for $uri")
     }
 
     fun createDocumentFile(filename: String): DocumentFile {
-        return getWorkspaceFolder().createFile("application/octet-stream", filename)!!
+        return getWorkspaceFolder().createFile("application/octet-stream", filename)
+            ?: throw IOException("Failed to create document file: $filename")
     }
 
     fun getUriSafe(uri: Uri): Uri {

@@ -30,30 +30,56 @@ class FilenameUtils {
          * isn't guaranteed that will work with all kinds of path
          */
         fun getFilePath(uri: Uri, addQuotes: Boolean = false): String {
-            val input = uri.path.toString()
-            val safStorage = input.split("/document/")[1].replace("/tree/", "")
-            val path = safStorage.split(":")[1]
-            if (path.contains("/storage/emulated")) {
-                return if (addQuotes) "'file://'$path" else "file://$path"
+            val path = uri.path ?: return if (addQuotes) "''" else ""
+            
+            if (!path.contains("/document/")) {
+                return if (addQuotes) "'${uri.toString()}'" else uri.toString()
             }
-            return if (safStorage.contains("primary")) {
-                val storagePath = "file:///storage/emulated/0/"
-                val finalPath = "$storagePath$path"
-                return if (addQuotes) "'$finalPath'" else finalPath
-            } else {
-                val storagePath = "file:///storage/"
-                val finalPath = storagePath + safStorage.replace(":", "/")
-                if (addQuotes) "'$finalPath'" else finalPath
+            
+            val parts = path.split("/document/")
+            if (parts.size < 2) {
+                return if (addQuotes) "'${uri.toString()}'" else uri.toString()
+            }
+            
+            val safStorage = parts[1].replace("/tree/", "")
+            val pathParts = safStorage.split(":")
+            if (pathParts.size < 2) {
+                return if (addQuotes) "'${uri.toString()}'" else uri.toString()
+            }
+            
+            val docPath = pathParts[1]
+            return when {
+                docPath.contains("/storage/emulated") -> {
+                    val result = "file://$docPath"
+                    if (addQuotes) "'$result'" else result
+                }
+                safStorage.contains("primary") -> {
+                    val storagePath = "file:///storage/emulated/0/"
+                    val finalPath = "$storagePath$docPath"
+                    if (addQuotes) "'$finalPath'" else finalPath
+                }
+                else -> {
+                    val storagePath = "file:///storage/"
+                    val finalPath = storagePath + safStorage.replace(":", "/")
+                    if (addQuotes) "'$finalPath'" else finalPath
+                }
             }
         }
 
         fun queryName(resolver: ContentResolver, uri: Uri): String {
-            val returnCursor: Cursor = resolver.query(uri, null, null, null, null)!!
-            val nameIndex: Int = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            returnCursor.moveToFirst()
-            val name: String = returnCursor.getString(nameIndex)
-            returnCursor.close()
-            return name
+            val cursor = resolver.query(uri, null, null, null, null)
+            if (cursor == null) {
+                return uri.lastPathSegment ?: uri.toString()
+            }
+            try {
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (nameIndex < 0 || !cursor.moveToFirst()) {
+                    return uri.lastPathSegment ?: uri.toString()
+                }
+                return cursor.getString(nameIndex)
+            } finally {
+                cursor.close()
+            }
         }
 
         fun getDigits(input: String): String {
@@ -61,7 +87,7 @@ class FilenameUtils {
         }
 
         fun getLengthFromFile(context: Context, uri: Uri): Long {
-            return DocumentFile.fromSingleUri(context, uri)!!.length()
+            return DocumentFile.fromSingleUri(context, uri)?.length() ?: -1
         }
     }
 }

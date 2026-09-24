@@ -7,7 +7,9 @@ tasks.register<Zip>("assembleMagiskModule") {
     val name = "DSU Sideloader"
     val author = "Knox"
     val description = "System mode for DSU Sideloader"
-    val updateJson = "https://raw.githubusercontent.com/Knox-0x1-cmd/DSU-Sideloader/main/other/module_updater/updater_module_gsid.json"
+    // Default updateJson, can be overridden via -PupdateJson=<url>
+    val updateJson = project.findProperty("updateJson") as String? 
+        ?: "https://raw.githubusercontent.com/Knox-0x1-cmd/DSU-Sideloader/main/other/module_updater/updater_module_gsid.json"
 
     val versionCode: Int by rootProject.extra
     val versionName: String by rootProject.extra
@@ -18,24 +20,22 @@ tasks.register<Zip>("assembleMagiskModule") {
     val releaseApk = File("${System.getProperty("user.dir")}/app/build/outputs/apk/release/app-release.apk")
 
     if (!releaseApk.exists()) {
-        return@register
+        throw GradleException("Release APK not found at $releaseApk. Run 'assembleRelease' first.")
     }
 
     val apkPath = File("$moduleDirectory/system/priv-app/DSUSideloader/ReleaseDSUSideloader.apk")
     if (apkPath.exists()) apkPath.delete()
     releaseApk.copyTo(apkPath)
 
-    fun getProps():
-            String = "id=$id\n" +
-            "name=$name\n" +
-            "version=$versionName\n" +
-            "versionCode=$versionCode\n" +
-            "author=$author\n" +
-            "description=$description\n" +
-            "updateJson=$updateJson"
+    fun getProps(): String = "id=$id\n" +
+        "name=$name\n" +
+        "version=$versionName\n" +
+        "versionCode=$versionCode\n" +
+        "author=$author\n" +
+        "description=$description\n" +
+        "updateJson=$updateJson"
 
-    fun getFilename():
-            String = "module_${name.replace(" ", "_")}_$versionCode.zip"
+    fun getFilename(): String = "module_${name.replace(" ", "_")}_$versionCode.zip"
 
     println("Building $id $versionName ($versionCode)")
 
