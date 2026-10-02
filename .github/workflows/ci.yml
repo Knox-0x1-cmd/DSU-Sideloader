@@ -28,20 +28,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    strategy:
-      matrix:
-        build_type: [release, minidebug]
-        include:
-          - build_type: release
-            gradle_task: assembleRelease
-            artifact_name: app-release
-            artifact_path: app/build/outputs/apk/release
-            retention_days: 30
-          - build_type: minidebug
-            gradle_task: assembleMiniDebug
-            artifact_name: app-minidebug
-            artifact_path: app/build/outputs/apk/miniDebug
-            retention_days: 7
 
     steps:
     - uses: actions/checkout@v4
@@ -63,19 +49,18 @@ jobs:
     - name: Set up Gradle
       uses: gradle/actions/setup-gradle@v4
 
-    - name: Build with Gradle
-      run: ./gradlew ${{ matrix.gradle_task }}
+    - name: Build MiniDebug
+      run: ./gradlew assembleMiniDebug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.artifact_name }}
-        path: ${{ matrix.artifact_path }}
+        name: app-minidebug
+        path: app/build/outputs/apk/miniDebug
         if-no-files-found: error
-        retention-days: ${{ matrix.retention_days }}
+        retention-days: 7
 
   release:
-    needs: build
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -86,23 +71,14 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Generate changelog
+    - name: Generate changelog from last 4 commits
       id: changelog
       shell: bash
       run: |
-        TAG="${{ github.ref_name }}"
-        # Get last 4 commits (excluding merges) as the changelog
         git log --no-merges --pretty=format:"- %s (%h)" -4 HEAD > /tmp/changelog.md
-
         echo "changelog<<EOF" >> $GITHUB_OUTPUT
         cat /tmp/changelog.md >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
-
-    - name: Download Release APK
-      uses: actions/download-artifact@v4
-      with:
-        name: app-release
-        path: release-apk
 
     - name: Download MiniDebug APK
       uses: actions/download-artifact@v4
@@ -110,12 +86,10 @@ jobs:
         name: app-minidebug
         path: minidebug-apk
 
-    - name: Rename APKs
+    - name: Rename APK
       run: |
         set -e
-        RELEASE_APK=$(find release-apk -name "*.apk" | head -1)
         MINIDEBUG_APK=$(find minidebug-apk -name "*.apk" | head -1)
-        [ -n "$RELEASE_APK" ] && mv "$RELEASE_APK" release-apk/app-release.apk
         [ -n "$MINIDEBUG_APK" ] && mv "$MINIDEBUG_APK" minidebug-apk/app-minidebug.apk
 
     - name: Create Release
@@ -124,8 +98,6 @@ jobs:
         tag_name: ${{ github.ref_name }}
         name: DSU Sideloader ${{ github.ref_name }}
         body: ${{ steps.changelog.outputs.changelog }}
-        files: |
-          release-apk/app-release.apk
-          minidebug-apk/app-minidebug.apk
+        files: minidebug-apk/app-minidebug.apk
         draft: false
         prerelease: false
