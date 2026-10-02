@@ -106,10 +106,8 @@ jobs:
         CHORES=$(grep -E "^(chore|build|ci|docs|test)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
         OTHERS=$(grep -vE "^(feat|feature|fix|bug|improve|perf|refactor|style|chore|build|ci|docs|test)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
 
-        cat > /tmp/changelog.md << 'CHANGELOG_EOF'
-## DSU Sideloader ${{ github.ref_name }}
-
-CHANGELOG_EOF
+        echo "## DSU Sideloader ${{ github.ref_name }}" > /tmp/changelog.md
+        echo "" >> /tmp/changelog.md
 
         [ -n "$FEATURES" ] && echo -e "### Features\n$FEATURES\n" >> /tmp/changelog.md
         [ -n "$FIXES" ] && echo -e "### Bug Fixes\n$FIXES\n" >> /tmp/changelog.md
