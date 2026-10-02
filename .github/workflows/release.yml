@@ -78,20 +78,54 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Get recent successful commits
-      id: commits
+    - name: Generate categorized changelog
+      id: changelog
       run: |
         TAG="${{ github.event.inputs.tag }}"
-        # Get commits since last tag (or last 20 commits if no previous tag)
+        if [ -z "$TAG" ]; then
+          echo "tag is required for release" && exit 1
+        fi
+
         LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
         if [ -n "$LAST_TAG" ]; then
-          COMMITS=$(git log --oneline --no-merges $LAST_TAG..HEAD)
+          COMMIT_RANGE="$LAST_TAG..HEAD"
         else
-          COMMITS=$(git log --oneline --no-merges -20)
+          COMMIT_RANGE="HEAD~20..HEAD"
         fi
-        echo "commits<<EOF" >> $GITHUB_OUTPUT
-        echo "$COMMITS" >> $GITHUB_OUTPUT
+
+        # Get commits with conventional format
+        git log --no-merges --pretty=format:"%s (%h)" $COMMIT_RANGE > /tmp/commits.txt
+
+        # Categorize commits
+        FEATURES=$(grep -E "^(feat|feature)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
+        FIXES=$(grep -E "^(fix|bug)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
+        IMPROVEMENTS=$(grep -E "^(improve|perf|refactor|style)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
+        CHORES=$(grep -E "^(chore|build|ci|docs|test)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
+        OTHERS=$(grep -vE "^(feat|feature|fix|bug|improve|perf|refactor|style|chore|build|ci|docs|test)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
+
+        cat << 'EOF' > /tmp/changelog.md
+## DSU Sideloader ${{ github.event.inputs.tag }}
+
+EOF
+
+        [ -n "$FEATURES" ] && echo -e "### ✨ Features\n$FEATURES\n" >> /tmp/changelog.md
+        [ -n "$FIXES" ] && echo -e "### 🐛 Bug Fixes\n$FIXES\n" >> /tmp/changelog.md
+        [ -n "$IMPROVEMENTS" ] && echo -e "### ⚡ Improvements\n$IMPROVEMENTS\n" >> /tmp/changelog.md
+        [ -n "$CHORES" ] && echo -e "### 🔧 Chores\n$CHORES\n" >> /tmp/changelog.md
+        [ -n "$OTHERS" ] && echo -e "### 📝 Other Changes\n$OTHERS\n" >> /tmp/changelog.md
+
+        echo -e "\n---\n\n### Build\n- Gradle 8.13\n- AGP 8.13.2\n- Kotlin 2.2.20\n- Compose 1.11.4" >> /tmp/changelog.md
+
+        cat /tmp/changelog.md
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        cat /tmp/changelog.md >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Download Release APK
+      uses: actions/download-artifact@v4
+      with:
+        name: outputs-apk-release
+        path: release-apk
 
     - name: Download MiniDebug APK
       uses: actions/download-artifact@v4
@@ -99,27 +133,19 @@ jobs:
         name: outputs-apk-minidebug
         path: minidebug-apk
 
-    - name: Rename APK to release.apk
-      run: mv minidebug-apk/*.apk minidebug-apk/release.apk
+    - name: Rename APKs
+      run: |
+        mv release-apk/*.apk release-apk/app-release.apk 2>/dev/null || true
+        mv minidebug-apk/*.apk minidebug-apk/app-minidebug.apk 2>/dev/null || true
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.event.inputs.tag }}
         name: DSU Sideloader ${{ github.event.inputs.tag }}
-        body: |
-          ## DSU Sideloader ${{ github.event.inputs.tag }}
-
-          ### Changes
-          ${{ steps.commits.outputs.commits }}
-
-          ---
-
-          ### Build
-          - Gradle 8.13
-          - AGP 8.13.2
-          - Kotlin 2.2.20
-          - Compose 1.11.4
-        files: minidebug-apk/release.apk
+        body: ${{ steps.changelog.outputs.changelog }}
+        files: |
+          release-apk/app-release.apk
+          minidebug-apk/app-minidebug.apk
         draft: false
         prerelease: false
