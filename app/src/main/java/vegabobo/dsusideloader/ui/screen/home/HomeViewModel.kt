@@ -106,14 +106,16 @@ class HomeViewModel @Inject constructor(
         // Check if a DSU is already installed
         // Root-only because MANAGE_DYNAMIC_SYSTEM is required
         if (session.isRoot()) {
-            PrivilegedProvider.run {
-                if (isInUse) {
-                    updateInstallationCard { it.copy(installationStep = InstallationStep.DSU_ALREADY_RUNNING_DYN_OS) }
-                    return@run
-                }
-                if (isInstalled) {
-                    updateInstallationCard { it.copy(installationStep = InstallationStep.DSU_ALREADY_INSTALLED) }
-                    return@run
+            viewModelScope.launch {
+                PrivilegedProvider.run {
+                    if (isInUse) {
+                        updateInstallationCard { it.copy(installationStep = InstallationStep.DSU_ALREADY_RUNNING_DYN_OS) }
+                        return@run
+                    }
+                    if (isInstalled) {
+                        updateInstallationCard { it.copy(installationStep = InstallationStep.DSU_ALREADY_INSTALLED) }
+                        return@run
+                    }
                 }
             }
         }
@@ -365,7 +367,9 @@ class HomeViewModel @Inject constructor(
             logger!!.destroy()
             // Since stopping installation requires MANAGE_DYNAMIC_SYSTEM
             // then, we stop installation using other way, not so polite, but works :)))
-            PrivilegedProvider.run { forceStopPackage("com.android.dynsystem") }
+            viewModelScope.launch {
+                PrivilegedProvider.run { forceStopPackage("com.android.dynsystem") }
+            }
         }
 
         if (installationJob.isActive) {
@@ -380,18 +384,22 @@ class HomeViewModel @Inject constructor(
 
     fun onClickRebootToDynOS() {
         updateInstallationCard { it.copy(installationStep = InstallationStep.PROCESSING) }
-        PrivilegedProvider.run {
-            setEnable(true, true)
-            Shell.cmd("reboot").exec()
+        viewModelScope.launch {
+            PrivilegedProvider.run {
+                setEnable(true, true)
+                Shell.cmd("reboot").exec()
+            }
         }
     }
 
     fun onClickDiscardGsiAndStartInstallation() {
         updateInstallationCard { it.copy(installationStep = InstallationStep.PROCESSING) }
         launchInstallation {
-            PrivilegedProvider.run {
-                remove()
-                forceStopPackage("com.android.dynsystem")
+            viewModelScope.launch {
+                PrivilegedProvider.run {
+                    remove()
+                    forceStopPackage("com.android.dynsystem")
+                }
             }
             startDSUInstallation()
         }
@@ -399,11 +407,13 @@ class HomeViewModel @Inject constructor(
 
     fun onClickDiscardGsi() {
         updateInstallationCard { it.copy(installationStep = InstallationStep.PROCESSING) }
-        PrivilegedProvider.run {
-            remove()
-            forceStopPackage("com.android.dynsystem")
-            dismissSheet()
-            resetInstallationCard()
+        viewModelScope.launch {
+            PrivilegedProvider.run {
+                remove()
+                forceStopPackage("com.android.dynsystem")
+                dismissSheet()
+                resetInstallationCard()
+            }
         }
     }
 
@@ -550,12 +560,14 @@ class HomeViewModel @Inject constructor(
             "${BuildConfig.APPLICATION_ID}.MainActivity",
         )
         intent.flags += Intent.FLAG_ACTIVITY_NEW_TASK
-        PrivilegedProvider.run {
-            grantPermission("android.permission.READ_LOGS")
-            if (Build.VERSION.SDK_INT <= 30) {
-                forceStopPackage(BuildConfig.APPLICATION_ID)
+        viewModelScope.launch {
+            PrivilegedProvider.run {
+                grantPermission("android.permission.READ_LOGS")
+                if (Build.VERSION.SDK_INT <= 30) {
+                    forceStopPackage(BuildConfig.APPLICATION_ID)
+                }
+                startActivity(intent)
             }
-            startActivity(intent)
         }
     }
 

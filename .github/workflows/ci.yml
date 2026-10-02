@@ -1,28 +1,47 @@
-name: Build & Release
+name: CI
 
 on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
   workflow_dispatch:
     inputs:
-      type:
+      build_type:
         description: 'Build type'
-        required: true
+        required: false
+        default: 'release'
         type: choice
         options:
           - release
-          - test
-        default: 'test'
-      tag:
-        description: 'Tag name (required for release, e.g. v2.04)'
-        required: false
-        type: string
+          - minidebug
 
 permissions:
   contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    strategy:
+      matrix:
+        build_type: [release, minidebug]
+        include:
+          - build_type: release
+            gradle_task: assembleRelease
+            artifact_name: app-release
+            artifact_path: app/build/outputs/apk/release
+            retention_days: 30
+          - build_type: minidebug
+            gradle_task: assembleMiniDebug
+            artifact_name: app-minidebug
+            artifact_path: app/build/outputs/apk/miniDebug
+            retention_days: 7
 
     steps:
     - uses: actions/checkout@v4
@@ -32,7 +51,7 @@ jobs:
     - name: Validate Gradle wrapper
       uses: gradle/actions/wrapper-validation@v4
 
-    - name: set up JDK 17
+    - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
@@ -44,31 +63,20 @@ jobs:
     - name: Set up Gradle
       uses: gradle/actions/setup-gradle@v4
 
-    - name: Build Release APK
-      run: ./gradlew assembleRelease
+    - name: Build with Gradle
+      run: ./gradlew ${{ matrix.gradle_task }}
 
-    - name: Build MiniDebug APK
-      run: ./gradlew assembleMiniDebug
-
-    - name: Upload Release APK
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: outputs-apk-release
-        path: app/build/outputs/apk/release
+        name: ${{ matrix.artifact_name }}
+        path: ${{ matrix.artifact_path }}
         if-no-files-found: error
-        retention-days: 30
-
-    - name: Upload MiniDebug APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: outputs-apk-minidebug
-        path: app/build/outputs/apk/miniDebug
-        if-no-files-found: error
-        retention-days: 30
+        retention-days: ${{ matrix.retention_days }}
 
   release:
     needs: build
-    if: github.event.inputs.type == 'release'
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -78,14 +86,10 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Generate categorized changelog
+    - name: Generate changelog
       id: changelog
       run: |
-        TAG="${{ github.event.inputs.tag }}"
-        if [ -z "$TAG" ]; then
-          echo "tag is required for release" && exit 1
-        fi
-
+        TAG="${{ github.ref_name }}"
         LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
         if [ -n "$LAST_TAG" ]; then
           COMMIT_RANGE="$LAST_TAG..HEAD"
@@ -93,10 +97,8 @@ jobs:
           COMMIT_RANGE="HEAD~20..HEAD"
         fi
 
-        # Get commits with conventional format
         git log --no-merges --pretty=format:"%s (%h)" $COMMIT_RANGE > /tmp/commits.txt
 
-        # Categorize commits
         FEATURES=$(grep -E "^(feat|feature)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
         FIXES=$(grep -E "^(fix|bug)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
         IMPROVEMENTS=$(grep -E "^(improve|perf|refactor|style)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
@@ -104,15 +106,15 @@ jobs:
         OTHERS=$(grep -vE "^(feat|feature|fix|bug|improve|perf|refactor|style|chore|build|ci|docs|test)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
 
         cat << 'EOF' > /tmp/changelog.md
-## DSU Sideloader ${{ github.event.inputs.tag }}
+## DSU Sideloader ${{ github.ref_name }}
 
 EOF
 
-        [ -n "$FEATURES" ] && echo -e "### ✨ Features\n$FEATURES\n" >> /tmp/changelog.md
-        [ -n "$FIXES" ] && echo -e "### 🐛 Bug Fixes\n$FIXES\n" >> /tmp/changelog.md
-        [ -n "$IMPROVEMENTS" ] && echo -e "### ⚡ Improvements\n$IMPROVEMENTS\n" >> /tmp/changelog.md
-        [ -n "$CHORES" ] && echo -e "### 🔧 Chores\n$CHORES\n" >> /tmp/changelog.md
-        [ -n "$OTHERS" ] && echo -e "### 📝 Other Changes\n$OTHERS\n" >> /tmp/changelog.md
+        [ -n "$FEATURES" ] && echo -e "### Features\n$FEATURES\n" >> /tmp/changelog.md
+        [ -n "$FIXES" ] && echo -e "### Bug Fixes\n$FIXES\n" >> /tmp/changelog.md
+        [ -n "$IMPROVEMENTS" ] && echo -e "### Improvements\n$IMPROVEMENTS\n" >> /tmp/changelog.md
+        [ -n "$CHORES" ] && echo -e "### Chores\n$CHORES\n" >> /tmp/changelog.md
+        [ -n "$OTHERS" ] && echo -e "### Other Changes\n$OTHERS\n" >> /tmp/changelog.md
 
         echo -e "\n---\n\n### Build\n- Gradle 8.13\n- AGP 8.13.2\n- Kotlin 2.2.20\n- Compose 1.11.4" >> /tmp/changelog.md
 
@@ -124,25 +126,28 @@ EOF
     - name: Download Release APK
       uses: actions/download-artifact@v4
       with:
-        name: outputs-apk-release
+        name: app-release
         path: release-apk
 
     - name: Download MiniDebug APK
       uses: actions/download-artifact@v4
       with:
-        name: outputs-apk-minidebug
+        name: app-minidebug
         path: minidebug-apk
 
     - name: Rename APKs
       run: |
-        mv release-apk/*.apk release-apk/app-release.apk 2>/dev/null || true
-        mv minidebug-apk/*.apk minidebug-apk/app-minidebug.apk 2>/dev/null || true
+        set -e
+        RELEASE_APK=$(find release-apk -name "*.apk" | head -1)
+        MINIDEBUG_APK=$(find minidebug-apk -name "*.apk" | head -1)
+        [ -n "$RELEASE_APK" ] && mv "$RELEASE_APK" release-apk/app-release.apk
+        [ -n "$MINIDEBUG_APK" ] && mv "$MINIDEBUG_APK" minidebug-apk/app-minidebug.apk
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.event.inputs.tag }}
-        name: DSU Sideloader ${{ github.event.inputs.tag }}
+        tag_name: ${{ github.ref_name }}
+        name: DSU Sideloader ${{ github.ref_name }}
         body: ${{ steps.changelog.outputs.changelog }}
         files: |
           release-apk/app-release.apk

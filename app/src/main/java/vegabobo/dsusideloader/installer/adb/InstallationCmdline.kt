@@ -38,7 +38,8 @@ class InstallationCmdline(
     }
 
     private fun shellEscape(input: String): String {
-        // Escape single quotes by closing the quote, adding escaped quote, reopening
+        // Properly escape for shell: wrap in single quotes and escape any embedded single quotes
+        // This is safe for POSIX shells (sh/bash)
         return "'${input.replace("'", "'\\''")}'"
     }
 }

@@ -21,14 +21,16 @@ open class DsuInstallationHandler(
 
     private val tag = this.javaClass.simpleName
 
-    fun startInstallation() {
-        if (session.preferences.isUnmountSdCard) {
-            unmountSdTemporary()
+    fun startInstallation(scope: CoroutineScope) {
+        scope.launch {
+            if (session.preferences.isUnmountSdCard) {
+                unmountSdTemporary()
+            }
+            forwardInstallationToDSU()
         }
-        forwardInstallationToDSU()
     }
 
-    private fun forwardInstallationToDSU() {
+    private suspend fun forwardInstallationToDSU() {
         val userdataSize = session.userSelection.userSelectedUserdata
         val fileUri = session.dsuInstallation.uri
         val length = session.dsuInstallation.fileSize
@@ -53,7 +55,7 @@ open class DsuInstallationHandler(
         }
     }
 
-    private fun unmountSdTemporary() {
+    private suspend fun unmountSdTemporary() {
         val volumes: List<VolumeInfo> =
             PrivilegedProvider.getServiceBlocking().volumes
         val volumesUnmount: ArrayList<String> = ArrayList()

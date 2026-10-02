@@ -144,18 +144,20 @@ dependencies {
     implementation("com.github.topjohnwu.libsu:core:_")
     implementation("com.github.topjohnwu.libsu:service:_")
 
-implementation("org.tukaani:xz:_")
+    implementation("org.tukaani:xz:_")
 
-implementation("org.apache.commons:commons-compress:_")
+    implementation("org.apache.commons:commons-compress:_")
 
-implementation("com.github.luben:zstd-jni:_")
+    implementation("com.github.luben:zstd-jni:_")
 
-implementation("org.lz4:lz4-java:_")
+    implementation("org.lz4:lz4-java:_")
 
-implementation("com.mikepenz:aboutlibraries-core:_")
+    implementation("com.mikepenz:aboutlibraries-core:_")
 
     implementation("dev.rikka.shizuku:api:_")
     implementation("dev.rikka.shizuku:provider:_")
+
+    implementation("com.materialkolor:material-kolor:_")
 
     implementation("org.lsposed.hiddenapibypass:hiddenapibypass:_")
 

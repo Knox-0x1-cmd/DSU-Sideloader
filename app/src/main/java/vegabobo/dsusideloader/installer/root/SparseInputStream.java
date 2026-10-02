@@ -156,11 +156,19 @@ public class SparseInputStream extends InputStream {
                 mLeft -= n;
                 return n;
             case SparseChunk.FILL:
-                // FILL chunk: fill the buffer with the 4-byte pattern
+                // FILL chunk: fill the buffer with the 4-byte pattern efficiently
                 n = (int) min(mLeft, len);
                 if (mCur.fill != null && mCur.fill.length == 4) {
-                    for (int i = 0; i < n; i++) {
-                        buf[off + i] = mCur.fill[i & 0x3];
+                    // Fill in 4-byte chunks for efficiency
+                    int filled = 0;
+                    while (filled + 3 < n) {
+                        System.arraycopy(mCur.fill, 0, buf, off + filled, 4);
+                        filled += 4;
+                    }
+                    // Handle remaining bytes
+                    while (filled < n) {
+                        buf[off + filled] = mCur.fill[filled & 0x3];
+                        filled++;
                     }
                 }
                 mLeft -= n;

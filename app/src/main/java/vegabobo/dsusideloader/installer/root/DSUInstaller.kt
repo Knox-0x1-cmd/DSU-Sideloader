@@ -10,6 +10,7 @@ import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -21,7 +22,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.lsposed.hiddenapibypass.HiddenApiBypass
 import vegabobo.dsusideloader.model.DSUInstallationSource
 import vegabobo.dsusideloader.model.ImagePartition
@@ -128,15 +128,13 @@ class DSUInstaller(
         }
         publishProgress(0L, partitionSize, partition)
         var prevInstalledSize = 0L
-        runBlocking {
-            while (job.isActive) {
-                val installedSize = installationProgress.bytes_processed
-                if (installedSize > prevInstalledSize + Constants.MIN_PROGRESS_TO_PUBLISH) {
-                    prevInstalledSize = installedSize
-                    publishProgress(installedSize, partitionSize, partition)
-                }
-                delay(100)
+        while (job.isActive) {
+            val installedSize = installationProgress.bytes_processed
+            if (installedSize > prevInstalledSize + Constants.MIN_PROGRESS_TO_PUBLISH) {
+                prevInstalledSize = installedSize
+                publishProgress(installedSize, partitionSize, partition)
             }
+            Thread.sleep(100)
         }
         if (!closePartition()) {
             Log.e(tag, "Failed to install $partition partition")
@@ -349,7 +347,8 @@ class DSUInstaller(
     }
 
     fun openInputStream(uri: Uri): InputStream {
-        return application.contentResolver.openInputStream(uri)!!
+        return application.contentResolver.openInputStream(uri)
+            ?: throw IOException("Failed to open input stream for $uri")
     }
 
     fun createNewPartition(partition: String, partitionSize: Long, readOnly: Boolean): Boolean {
