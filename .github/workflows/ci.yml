@@ -91,33 +91,9 @@ jobs:
       shell: bash
       run: |
         TAG="${{ github.ref_name }}"
-        LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-        if [ -n "$LAST_TAG" ]; then
-          COMMIT_RANGE="$LAST_TAG..HEAD"
-        else
-          COMMIT_RANGE="HEAD~20..HEAD"
-        fi
+        # Get last 4 commits (excluding merges) as the changelog
+        git log --no-merges --pretty=format:"- %s (%h)" -4 HEAD > /tmp/changelog.md
 
-        git log --no-merges --pretty=format:"%s (%h)" $COMMIT_RANGE > /tmp/commits.txt
-
-        FEATURES=$(grep -E "^(feat|feature)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
-        FIXES=$(grep -E "^(fix|bug)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
-        IMPROVEMENTS=$(grep -E "^(improve|perf|refactor|style)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
-        CHORES=$(grep -E "^(chore|build|ci|docs|test)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
-        OTHERS=$(grep -vE "^(feat|feature|fix|bug|improve|perf|refactor|style|chore|build|ci|docs|test)(\(.*\))?:" /tmp/commits.txt | sed 's/^/- /' || echo "")
-
-        echo "## DSU Sideloader ${{ github.ref_name }}" > /tmp/changelog.md
-        echo "" >> /tmp/changelog.md
-
-        [ -n "$FEATURES" ] && echo -e "### Features\n$FEATURES\n" >> /tmp/changelog.md
-        [ -n "$FIXES" ] && echo -e "### Bug Fixes\n$FIXES\n" >> /tmp/changelog.md
-        [ -n "$IMPROVEMENTS" ] && echo -e "### Improvements\n$IMPROVEMENTS\n" >> /tmp/changelog.md
-        [ -n "$CHORES" ] && echo -e "### Chores\n$CHORES\n" >> /tmp/changelog.md
-        [ -n "$OTHERS" ] && echo -e "### Other Changes\n$OTHERS\n" >> /tmp/changelog.md
-
-        echo -e "\n---\n\n### Build\n- Gradle 8.13\n- AGP 8.13.2\n- Kotlin 2.2.20\n- Compose 1.11.4" >> /tmp/changelog.md
-
-        cat /tmp/changelog.md
         echo "changelog<<EOF" >> $GITHUB_OUTPUT
         cat /tmp/changelog.md >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
