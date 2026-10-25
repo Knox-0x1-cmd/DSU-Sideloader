@@ -4,31 +4,122 @@ on:
   workflow_dispatch:
   push:
     branches: [ "master" ]
+    tags: [ "v*" ]
   pull_request:
     branches: [ "master" ]
 
+permissions:
+  contents: read
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.name }}
+      signed: ${{ steps.signing.outputs.configured }}
 
     steps:
-    - uses: actions/checkout@v5
-    - name: set up JDK 17
-      uses: actions/setup-java@v5
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+      - uses: actions/checkout@v5
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-      
-    - name: Build with Gradle
-      run: ./gradlew assembleMiniDebug
-      
-    - name: Archive artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: outputs-apk-minidebug
-        path: app/build/outputs/apk/miniDebug
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(sed -n 's/.*versionName by extra { "\([^"]*\)" }.*/\1/p' build.gradle.kts | head -1)
+          [ -n "$VERSION" ] || { echo "Could not read app version"; exit 1; }
+          echo "name=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check release tag
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          VERSION: ${{ steps.version.outputs.name }}
+        run: |
+          if [ "$GITHUB_REF_NAME" != "v$VERSION" ]; then
+            echo "Tag $GITHUB_REF_NAME must match v$VERSION"
+            exit 1
+          fi
+
+      - name: Configure release signing (optional)
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.DSU_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.DSU_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.DSU_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.DSU_KEY_PASSWORD }}
+        run: |
+          if [ -z "${KEYSTORE_BASE64:-}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          set -euo pipefail
+          mkdir -p .sign
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > .sign/release.keystore
+          STORE_PASSWORD="${KEYSTORE_PASSWORD:?DSU_KEYSTORE_PASSWORD is required}"
+          ALIAS="${KEY_ALIAS:?DSU_KEY_ALIAS is required}"
+          ALIAS_PASSWORD="${KEY_PASSWORD:-$STORE_PASSWORD}"
+          printf 'keystore=%s\nkeystore_pw=%s\nalias=%s\nalias_pw=%s\n' \
+            "$GITHUB_WORKSPACE/.sign/release.keystore" "$STORE_PASSWORD" "$ALIAS" "$ALIAS_PASSWORD" \
+            > .sign/dsu_sideloader.prop
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build APK
+        env:
+          VERSION: ${{ steps.version.outputs.name }}
+          SIGNED: ${{ steps.signing.outputs.configured }}
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          if [ "$SIGNED" = true ]; then
+            ./gradlew assembleRelease
+            cp app/build/outputs/apk/release/*.apk "out/dsu-sideloader-v${VERSION}.apk"
+          else
+            ./gradlew assembleMiniDebug
+            cp app/build/outputs/apk/miniDebug/*.apk "out/dsu-sideloader-v${VERSION}-debug.apk"
+          fi
+          cd out
+          sha256sum ./*.apk > SHA256SUMS.txt
+
+      - name: Archive APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: dsu-sideloader-apk
+          path: out/*
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dsu-sideloader-apk
+          path: out
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+          SIGNED: ${{ needs.build.outputs.signed }}
+        run: |
+          set -euo pipefail
+          TITLE="DSU Sideloader $VERSION"
+          if [ "$SIGNED" != true ]; then
+            TITLE="$TITLE (debug build)"
+            gh release create "$GITHUB_REF_NAME" out/* \
+              --repo "$GITHUB_REPOSITORY" --title "$TITLE" --generate-notes --prerelease
+          else
+            gh release create "$GITHUB_REF_NAME" out/* \
+              --repo "$GITHUB_REPOSITORY" --title "$TITLE" --generate-notes
+          fi

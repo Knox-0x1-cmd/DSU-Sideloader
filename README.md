@@ -24,8 +24,10 @@ Google GSIs: https://developer.android.com/topic/generic-system-image/releases
      alt="Get it on F-Droid"
      height="80">](https://f-droid.org/packages/vegabobo.dsusideloader/)
 
-Or download the latest APK from the [Releases Section](https://github.com/VegaBobo/DSU-Sideloader/releases/latest).
-For testing builds, you can check artifacts at [Actions](https://github.com/VegaBobo/DSU-Sideloader/actions) tab
+Or download the latest APK from this fork's [Releases](https://github.com/Knox-0x1-organization/DSU-Sideloader/releases/latest).
+For testing builds, check this fork's [Actions](https://github.com/Knox-0x1-organization/DSU-Sideloader/actions) artifacts.
+
+Release APKs are debug-signed until a release keystore is configured in GitHub Actions secrets. A debug-signed APK installs as a fresh app but cannot update an existing install. Configure `DSU_KEYSTORE_BASE64`, `DSU_KEYSTORE_PASSWORD`, and `DSU_KEY_ALIAS` (optionally `DSU_KEY_PASSWORD`) to publish updateable signed releases.
 
 ## How to use?
 1. Install app
