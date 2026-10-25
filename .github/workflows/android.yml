@@ -88,7 +88,7 @@ jobs:
           sha256sum ./*.apk > SHA256SUMS.txt
 
       - name: Archive APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dsu-sideloader-apk
           path: out/*
@@ -102,7 +102,7 @@ jobs:
       contents: write
     steps:
       - name: Download APK artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dsu-sideloader-apk
           path: out
