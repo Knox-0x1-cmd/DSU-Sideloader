@@ -14,7 +14,11 @@ class LogcatDiagnostic(
 ) {
 
     private val tag = this.javaClass.simpleName
-    var logs = ""
+    private val logBuffer = StringBuilder()
+    val logs: String
+        get() = synchronized(this) { logBuffer.toString() }
+    private val maxLogCharacters = 500_000
+    private var lastUiUpdate = 0L
     val isLogging = AtomicBoolean(false)
     var shouldLogEverything = false
 
@@ -22,7 +26,8 @@ class LogcatDiagnostic(
         if (isLogging.get()) {
             destroy()
         }
-        logs = ""
+        synchronized(this) { logBuffer.setLength(0) }
+        lastUiUpdate = 0L
         isLogging.set(true)
         Log.d(tag, "startLogging(), logEveryting: $shouldLogEverything, isLogging: ${isLogging.get()}")
         CmdRunner.run("logcat -c")
@@ -32,9 +37,11 @@ class LogcatDiagnostic(
             } else {
                 "logcat -v tag gsid:* *:S DynamicSystemService:* *:S DynamicSystemInstallationService:* *:S DynSystemInstallationService:* *:S"
             }
+        var hasPrependedInfo = false
         CmdRunner.runReadEachLine(logCmd) {
-            if (logs.isEmpty()) {
-                logs = "$prependString\n"
+            if (!hasPrependedInfo) {
+                appendLog(prependString)
+                hasPrependedInfo = true
             }
 
             if (it.contains("DynamicSystemService") && it.contains("startInstallation")) {
@@ -46,8 +53,12 @@ class LogcatDiagnostic(
                 return@runReadEachLine
             }
 
-            logs += "$it\n"
-            onLogLineReceived()
+            appendLog(it)
+            val now = android.os.SystemClock.elapsedRealtime()
+            if (now - lastUiUpdate >= 200L) {
+                lastUiUpdate = now
+                onLogLineReceived()
+            }
 
             /**
              * Cannot install DSU when running a installed DSU.
@@ -205,6 +216,15 @@ class LogcatDiagnostic(
             }
         }
     }
+
+    private fun appendLog(line: String) = synchronized(this) {
+        logBuffer.append(line).append('\n')
+        if (logBuffer.length > maxLogCharacters) {
+            logBuffer.delete(0, logBuffer.length - maxLogCharacters)
+        }
+    }
+
+    fun clearLogs() = synchronized(this) { logBuffer.setLength(0) }
 
     fun destroy() {
         CmdRunner.destroy()

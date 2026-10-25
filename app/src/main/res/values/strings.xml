@@ -218,6 +218,12 @@
     -->
 
     <string name="installation_logs">Installation logs</string>
+    <string name="search_logs">Search logs</string>
+    <string name="log_line_count">%1$d lines</string>
+    <string name="logs_waiting">Activity will appear here when installation starts.</string>
+    <string name="no_matching_logs">No matching log lines.</string>
+    <string name="copy_logs">Copy logs</string>
+    <string name="logs_copied">Logs copied</string>
     <string name="save_logs">Save logs</string>
     <string name="saved_logs">Logs saved!</string>
 

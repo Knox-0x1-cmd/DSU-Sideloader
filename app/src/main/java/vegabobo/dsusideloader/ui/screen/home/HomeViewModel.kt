@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.SystemClock
 import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -58,6 +59,7 @@ class HomeViewModel @Inject constructor(
 
     var installationJob: Job = Job()
     var logger: LogcatDiagnostic? = null
+    private val activityLog = StringBuilder()
 
     private val allocPercentage = DevicePropUtils.getGsidBinaryAllowedPerc()
     val allocPercentageInt = String.format("%.0f", allocPercentage * 100).toInt()
@@ -204,6 +206,9 @@ class HomeViewModel @Inject constructor(
 
     fun onConfirmInstallationSheet() {
         dismissSheet()
+        clearActivityLog()
+        logger?.clearLogs()
+        appendActivityLog("Installation requested for ${session.userSelection.selectedFileName}")
         updateInstallationCard { it.copy(installationStep = InstallationStep.PROCESSING) }
         installationJob = Job()
         viewModelScope.launch(Dispatchers.IO + installationJob) {
@@ -520,24 +525,29 @@ class HomeViewModel @Inject constructor(
     //
 
     private fun onRootInstallationSuccess() {
+        appendActivityLog("All partitions installed successfully")
         updateInstallationCard { it.copy(installationStep = InstallationStep.INSTALL_SUCCESS_REBOOT_DYN_OS) }
     }
 
     private fun onInstallationSuccess() {
+        appendActivityLog("DSU installation completed successfully")
         updateInstallationCard { it.copy(installationStep = InstallationStep.INSTALL_SUCCESS) }
     }
 
     private fun onLogLineReceived() {
-        _uiState.update { it.copy(installationLogs = logger!!.logs) }
+        refreshInstallationLogs()
     }
 
-    private fun onStepUpdate(step: InstallationStep) =
+    private fun onStepUpdate(step: InstallationStep) {
+        appendActivityLog("Step: ${step.name.replace('_', ' ').lowercase()}")
         updateInstallationCard { it.copy(installationStep = step) }
+    }
 
     private fun onPreparationProgressUpdate(progress: Float) =
         updateInstallationCard { it.copy(installationProgress = progress) }
 
-    private fun onInstallationError(error: InstallationStep, errorContent: String) =
+    private fun onInstallationError(error: InstallationStep, errorContent: String) {
+        appendActivityLog("Installation error (${error.name}): $errorContent")
         updateInstallationCard {
             if (error == InstallationStep.ERROR_SELINUX && !session.isRoot()) {
                 it.copy(
@@ -548,17 +558,41 @@ class HomeViewModel @Inject constructor(
                 it.copy(installationStep = error, errorText = errorContent)
             }
         }
+    }
 
-    private fun onInstallationProgressUpdate(progress: Float, partition: String) =
+    private fun onInstallationProgressUpdate(progress: Float, partition: String) {
+        if (uiState.value.installationCard.currentPartitionText != partition) {
+            appendActivityLog("Installing partition: $partition")
+        }
         updateInstallationCard {
             it.copy(currentPartitionText = partition, installationProgress = progress)
         }
+    }
 
-    private fun onCreatePartition(partition: String) =
+    private fun onCreatePartition(partition: String) {
+        appendActivityLog("Creating partition: $partition")
         updateInstallationCard {
             it.copy(
                 installationStep = InstallationStep.CREATING_PARTITION,
                 currentPartitionText = partition,
             )
         }
+    }
+
+    private fun clearActivityLog() = synchronized(activityLog) { activityLog.setLength(0) }
+
+    private fun appendActivityLog(message: String) {
+        synchronized(activityLog) {
+            activityLog.append('[').append(SystemClock.elapsedRealtime()).append(" ms] ")
+                .append(message).append('\n')
+            if (activityLog.length > 100_000) activityLog.delete(0, activityLog.length - 100_000)
+        }
+        refreshInstallationLogs()
+    }
+
+    private fun refreshInstallationLogs() {
+        val activity = synchronized(activityLog) { activityLog.toString() }
+        val diagnostic = logger?.logs.orEmpty()
+        _uiState.update { it.copy(installationLogs = listOf(activity, diagnostic).filter { part -> part.isNotBlank() }.joinToString("\n")) }
+    }
 }

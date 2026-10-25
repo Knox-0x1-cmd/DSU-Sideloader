@@ -1,8 +1,12 @@
 package vegabobo.dsusideloader.ui.sdialogs
 
 import android.content.Intent
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,6 +49,16 @@ fun ViewLogsBottomSheet(
                 .fillMaxWidth()
                 .padding(top = 8.dp),
         ) {
+            OutlinedButton(
+                onClick = {
+                    val clipboard = context.getSystemService(ClipboardManager::class.java)
+                    clipboard?.setPrimaryClip(ClipData.newPlainText("DSU installation logs", logs))
+                    Toast.makeText(context, R.string.logs_copied, Toast.LENGTH_SHORT).show()
+                },
+                enabled = logs.isNotBlank(),
+            ) {
+                Text(stringResource(R.string.copy_logs))
+            }
             Spacer(modifier = Modifier.weight(1F))
             PrimaryButton(
                 text = stringResource(id = R.string.save_logs),
