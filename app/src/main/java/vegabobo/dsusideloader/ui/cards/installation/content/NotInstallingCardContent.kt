@@ -1,7 +1,6 @@
 package vegabobo.dsusideloader.ui.cards.installation.content
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,18 +20,18 @@ import vegabobo.dsusideloader.ui.screen.home.InstallationCardState
 
 @Composable
 fun NotInstallingCardContent(
-    textFieldInteraction: MutableInteractionSource,
     uiState: InstallationCardState,
+    onClickSelectFile: () -> Unit,
     onClickClear: () -> Unit,
     onClickInstall: () -> Unit,
 ) {
     FileSelectionBox(
-        textFieldInteraction = textFieldInteraction,
         isEnabled = uiState.isTextFieldEnabled,
         isError = uiState.isError,
         isReadOnly = true,
         textFieldValue = uiState.text,
         textFieldTitle = stringResource(id = R.string.select_gsi_info),
+        onClick = onClickSelectFile,
     )
     Spacer(modifier = Modifier.padding(top = 10.dp))
     Row(

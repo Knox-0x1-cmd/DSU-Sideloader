@@ -100,7 +100,9 @@ class StorageManager(
 
     private fun copyFileToSafFolder(inputFile: Uri): Uri {
         val clone: DocumentFile = createDocumentFile(getFilenameFromUri(inputFile))
-        IOUtils.copy(openInputStream(inputFile), openOutputStream(clone.uri))
+        openInputStream(inputFile).use { input ->
+            openOutputStream(clone.uri).use { output -> IOUtils.copy(input, output) }
+        }
         return clone.uri
     }
 
@@ -125,9 +127,7 @@ class StorageManager(
     }
 
     fun writeStringToUri(content: String, uri: Uri): String {
-        val outputStream = appContext.contentResolver.openOutputStream(uri)!!
-        outputStream.write(content.toByteArray())
-        outputStream.close()
+        appContext.contentResolver.openOutputStream(uri)!!.use { it.write(content.toByteArray()) }
         return FilenameUtils.getFilePath(uri, false).replace("file://", "")
     }
 
@@ -164,6 +164,6 @@ class StorageManager(
     }
 
     private fun isPathWrong(uri: Uri): Boolean {
-        return uri.path.toString().contains("msf:")
+        return uri.scheme != "file" && uri.authority != "com.android.externalstorage.documents"
     }
 }

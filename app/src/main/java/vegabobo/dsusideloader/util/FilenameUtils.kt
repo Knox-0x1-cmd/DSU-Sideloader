@@ -2,10 +2,11 @@ package vegabobo.dsusideloader.util
 
 import android.content.ContentResolver
 import android.content.Context
-import android.database.Cursor
 import android.net.Uri
+import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.documentfile.provider.DocumentFile
+import java.io.File
 
 class FilenameUtils {
 
@@ -30,30 +31,43 @@ class FilenameUtils {
          * isn't guaranteed that will work with all kinds of path
          */
         fun getFilePath(uri: Uri, addQuotes: Boolean = false): String {
-            val input = uri.path.toString()
-            val safStorage = input.split("/document/")[1].replace("/tree/", "")
-            val path = safStorage.split(":")[1]
-            if (path.contains("/storage/emulated")) {
-                return if (addQuotes) "'file://'$path" else "file://$path"
+            val path = when {
+                uri.scheme == "file" -> uri.path ?: throw IllegalArgumentException("File URI has no path")
+                uri.authority == "com.android.externalstorage.documents" -> {
+                    val documentId = DocumentsContract.getDocumentId(uri)
+                    val separator = documentId.indexOf(':')
+                    require(separator > 0) { "Unsupported external-storage document URI" }
+                    val volume = documentId.substring(0, separator)
+                    val relative = documentId.substring(separator + 1).trimStart('/')
+                    require(volume.matches(Regex("[A-Za-z0-9._-]+")) && volume != "." && volume != "..") {
+                        "Invalid storage volume id"
+                    }
+                    require(relative.split('/').none { it == ".." }) { "Invalid storage document path" }
+                    val base = if (volume.equals("primary", ignoreCase = true)) {
+                        File("/storage/emulated/0")
+                    } else {
+                        File("/storage", volume)
+                    }.canonicalFile
+                    val resolved = File(base, relative).canonicalFile
+                    require(resolved == base || resolved.toPath().startsWith(base.toPath())) {
+                        "Document URI resolves outside its storage volume"
+                    }
+                    resolved.path
+                }
+                else -> throw IllegalArgumentException("URI is not backed by a filesystem path")
             }
-            return if (safStorage.contains("primary")) {
-                val storagePath = "file:///storage/emulated/0/"
-                val finalPath = "$storagePath$path"
-                return if (addQuotes) "'$finalPath'" else finalPath
-            } else {
-                val storagePath = "file:///storage/"
-                val finalPath = storagePath + safStorage.replace(":", "/")
-                if (addQuotes) "'$finalPath'" else finalPath
-            }
+            val fileUri = Uri.fromFile(File(path)).toString()
+            return if (addQuotes) "'${fileUri.replace("'", "'\\''")}'" else fileUri
         }
 
         fun queryName(resolver: ContentResolver, uri: Uri): String {
-            val returnCursor: Cursor = resolver.query(uri, null, null, null, null)!!
-            val nameIndex: Int = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            returnCursor.moveToFirst()
-            val name: String = returnCursor.getString(nameIndex)
-            returnCursor.close()
-            return name
+            val name = resolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (nameIndex >= 0 && cursor.moveToFirst()) cursor.getString(nameIndex) else null
+            }
+            return name?.takeIf { it.isNotBlank() }
+                ?: uri.lastPathSegment?.substringAfterLast('/')?.takeIf { it.isNotBlank() }
+                ?: "unnamed"
         }
 
         fun getDigits(input: String): String {
@@ -61,7 +75,12 @@ class FilenameUtils {
         }
 
         fun getLengthFromFile(context: Context, uri: Uri): Long {
-            return DocumentFile.fromSingleUri(context, uri)!!.length()
+            val documentLength = DocumentFile.fromSingleUri(context, uri)?.length() ?: -1L
+            if (documentLength > 0L) return documentLength
+            return context.contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { cursor ->
+                val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                if (sizeIndex >= 0 && cursor.moveToFirst()) cursor.getLong(sizeIndex) else -1L
+            } ?: -1L
         }
     }
 }

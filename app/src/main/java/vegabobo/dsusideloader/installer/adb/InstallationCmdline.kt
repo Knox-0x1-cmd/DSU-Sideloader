@@ -30,10 +30,13 @@ class InstallationCmdline(
     }
 
     private fun addArgument(argument: String, property: String, value: Any?): String {
-        return "$argument $property $value "
+        return "$argument ${shellQuote(property)} ${shellQuote(value)} "
     }
 
     private fun addArgument(argument: String, value: Any?): String {
-        return "$argument $value "
+        return "$argument ${shellQuote(value)} "
     }
+
+    /** Arguments are inserted into a shell script executed through adb; quote paths as one argument. */
+    private fun shellQuote(value: Any?): String = "'${value.toString().replace("'", "'\\''")}'"
 }

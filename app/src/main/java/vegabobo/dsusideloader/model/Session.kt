@@ -73,7 +73,7 @@ class Session(
 
     fun getInstallationParameters(): Triple<Long, String, Long> {
         val userdataSize = userSelection.userSelectedUserdata
-        val absoluteFilePath = FilenameUtils.getFilePath(dsuInstallation.uri, true)
+        val absoluteFilePath = FilenameUtils.getFilePath(dsuInstallation.uri)
 
         var imageSize = dsuInstallation.fileSize
         if (userSelection.isCustomImageSize()) {

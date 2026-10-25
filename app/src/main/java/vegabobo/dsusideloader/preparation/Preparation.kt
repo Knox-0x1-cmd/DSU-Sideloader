@@ -1,7 +1,6 @@
 package vegabobo.dsusideloader.preparation
 
 import android.net.Uri
-import java.math.BigInteger
 import kotlinx.coroutines.Job
 import vegabobo.dsusideloader.core.StorageManager
 import vegabobo.dsusideloader.model.DSUConstants
@@ -134,15 +133,10 @@ class Preparation(
         // If the .gz is smaller than 3gb, then try returning the image size
         // by reading the lasts four bytes.
         if (fileSize < three_gb) {
-            val inputStream = storageManager.openInputStream(uri)
-            inputStream.skip(fileSize - 4)
-            val bytes = ByteArray(4)
-            inputStream.read(bytes)
-            bytes.reverse() // Little endian -> Big endian
-            val imageSize = BigInteger(1, bytes).toLong()
+            val imageSize = readGzipTrailerSize(uri, fileSize)
             // If the image size is LOWER than the compressed file, then
             // the image size must be wrong.
-            if (imageSize > fileSize) {
+            if (imageSize != null && imageSize > fileSize) {
                 return Pair(uri, imageSize)
             }
         }
@@ -155,6 +149,36 @@ class Preparation(
             FileUnPacker(storageManager, uri, outputFile, job, onPreparationProgressUpdate).unpack()
         return Pair(uri, extractedFilePair.second)
     }
+
+    /** Reads gzip ISIZE (the final four bytes) even when a SAF stream cannot skip the full distance. */
+    private fun readGzipTrailerSize(uri: Uri, fileSize: Long): Long? = runCatching {
+        if (fileSize < 4L) return@runCatching null
+        storageManager.openInputStream(uri).use { input ->
+            var remaining = fileSize - 4L
+            val discard = ByteArray(8 * 1024)
+            while (remaining > 0L) {
+                val skipped = input.skip(remaining)
+                if (skipped > 0L) {
+                    remaining -= skipped
+                } else {
+                    val count = input.read(discard, 0, minOf(discard.size.toLong(), remaining).toInt())
+                    if (count < 0) return@runCatching null
+                    if (count > 0) remaining -= count
+                }
+            }
+            val trailer = ByteArray(4)
+            var read = 0
+            while (read < trailer.size) {
+                val count = input.read(trailer, read, trailer.size - read)
+                if (count < 0) return@runCatching null
+                if (count > 0) read += count
+            }
+            (trailer[0].toLong() and 0xff) or
+                ((trailer[1].toLong() and 0xff) shl 8) or
+                ((trailer[2].toLong() and 0xff) shl 16) or
+                ((trailer[3].toLong() and 0xff) shl 24)
+        }
+    }.getOrNull()
 
     private fun extractFile(uri: Uri): Pair<Uri, Long> {
         return extractFile(uri, "system")

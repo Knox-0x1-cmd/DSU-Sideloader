@@ -2,16 +2,15 @@ package vegabobo.dsusideloader.ui.cards.installation
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import vegabobo.dsusideloader.R
 import vegabobo.dsusideloader.ui.components.CardBox
 import vegabobo.dsusideloader.ui.screen.home.InstallationCardState
-import vegabobo.dsusideloader.ui.util.launcherAcResult
 
 @Composable
 fun InstallationCard(
@@ -31,26 +30,33 @@ fun InstallationCard(
     onClickViewLogs: () -> Unit,
     onClickViewCommands: () -> Unit,
 ) {
-    var chooseFile = Intent(Intent.ACTION_OPEN_DOCUMENT)
-    chooseFile.type = "*/*"
-    val mimetypes = arrayOf(
+    val context = LocalContext.current
+    val mimeTypes = arrayOf(
         "application/gzip",
         "application/x-gzip",
         "application/x-xz",
         "application/zip",
         "application/octet-stream",
     )
-    chooseFile.putExtra(Intent.EXTRA_MIME_TYPES, mimetypes)
-    chooseFile = Intent.createChooser(chooseFile, "")
-
-    val launcherSelectFile = launcherAcResult {
-        onSelectFileSuccess(it)
+    val launcherSelectFile = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) {
+        it?.let(onSelectFileSuccess)
     }
-
-    val textFieldInteraction = remember { MutableInteractionSource() }
-
-    if (textFieldInteraction.collectIsPressedAsState().value) {
-        launcherSelectFile.launch(chooseFile)
+    val launcherSelectFileFallback = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
+        it?.let(onSelectFileSuccess)
+    }
+    val onClickSelectFile: () -> Unit = {
+        if (uiState.isTextFieldEnabled) {
+            val openDocumentHandlerPkg = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"
+            }.resolveActivity(context.packageManager)?.packageName
+            if (openDocumentHandlerPkg == "su.axi.documentsui") {
+                launcherSelectFileFallback.launch("*/*")
+            } else {
+                runCatching { launcherSelectFile.launch(mimeTypes) }
+                    .onFailure { launcherSelectFileFallback.launch("*/*") }
+            }
+        }
     }
 
     CardBox(
@@ -60,7 +66,7 @@ fun InstallationCard(
     ) {
         InstallationCardStep(
             uiState = uiState,
-            textFieldInteraction = textFieldInteraction,
+            onClickSelectFile = onClickSelectFile,
             onClickClear = onClickClear,
             onClickInstall = onClickInstall,
             onClickRetryInstallation = onClickRetryInstallation,

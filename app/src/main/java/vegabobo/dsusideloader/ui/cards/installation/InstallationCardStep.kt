@@ -1,6 +1,5 @@
 package vegabobo.dsusideloader.ui.cards.installation
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import vegabobo.dsusideloader.R
@@ -12,7 +11,7 @@ import vegabobo.dsusideloader.ui.screen.home.InstallationCardState
 @Composable
 fun InstallationCardStep(
     uiState: InstallationCardState,
-    textFieldInteraction: MutableInteractionSource,
+    onClickSelectFile: () -> Unit,
     minPercentageOfFreeStorage: String = "40",
     onClickClear: () -> Unit,
     onClickInstall: () -> Unit,
@@ -29,7 +28,7 @@ fun InstallationCardStep(
     when (uiState.installationStep) {
         InstallationStep.NOT_INSTALLING ->
             NotInstallingCardContent(
-                textFieldInteraction = textFieldInteraction,
+                onClickSelectFile = onClickSelectFile,
                 uiState = uiState,
                 onClickClear = onClickClear,
                 onClickInstall = onClickInstall,
