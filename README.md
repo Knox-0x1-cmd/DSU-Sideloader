@@ -1,140 +1,112 @@
 # DSU Sideloader
 
-A simple app made to help users easily install GSIs via DSU's Android feature.
-<div>
-<img src="https://raw.githubusercontent.com/VegaBobo/DSU-Sideloader/master/other/preview_1.png" alt="preview" width="200"/>  
-<img src="https://raw.githubusercontent.com/VegaBobo/DSU-Sideloader/master/other/preview_2.png" alt="preview" width="200"/>  
-</div>
+DSU Sideloader prepares Android system images and installs them with **Dynamic System Updates (DSU)**. DSU boots a Generic System Image (GSI) in temporary dynamic partitions, so you can try another Android build without replacing the device's normal system image.
+
+> **This is an advanced Android tool.** A GSI can fail to boot or behave differently from your device's stock ROM. Keep a reliable way to restore your device and back up important data before experimenting.
+
+<p align="center">
+  <img src="other/preview_1.png" alt="DSU Sideloader home screen" width="220" />
+  &nbsp;&nbsp;
+  <img src="other/preview_2.png" alt="DSU Sideloader installation screen" width="220" />
+</p>
 
 ## Requirements
-- Android 10 or higher
-- Unlocked Bootloader
-- Device with Dynamic Partitions
-- A GSI you want to use!
 
-Community GSIs: https://github.com/phhusson/treble_experimentations/wiki/Generic-System-Image-%28GSI%29-list
+- Android 10 (API 29) or newer.
+- A device that supports dynamic partitions and DSU.
+- An unlocked bootloader for most third-party GSIs.
+- A GSI that matches the device's CPU architecture and vendor interface.
+- Temporary storage space for the selected image and any extracted files.
 
-Google GSIs: https://developer.android.com/topic/generic-system-image/releases
+GSI references: [Android Generic System Images](https://developer.android.com/topic/generic-system-image/releases) · [Community GSI list](https://github.com/phhusson/treble_experimentations/wiki/Generic-System-Image-%28GSI%29-list)
 
-**Remember to use GSIs compatible with your architeture, vndk implementation..*
+## Download
 
-## Downloads
+- **Latest release:** [GitHub Releases](https://github.com/Knox-0x1-organization/DSU-Sideloader/releases/latest)
+- **Development builds:** [GitHub Actions](https://github.com/Knox-0x1-organization/DSU-Sideloader/actions) (open a successful run and download its APK artifact)
+- **F-Droid:** [DSU Sideloader](https://f-droid.org/packages/vegabobo.dsusideloader/)
 
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-     alt="Get it on F-Droid"
-     height="80">](https://f-droid.org/packages/vegabobo.dsusideloader/)
+Releases from this fork are debug-signed until a private release keystore is configured in the repository's GitHub Actions secrets. A debug-signed APK can be installed as a fresh app, but Android will not allow it to update an installation signed with a different key. The signing key must be controlled and backed up by the repository owner; never commit it to the repository.
 
-Or download the latest APK from this fork's [Releases](https://github.com/Knox-0x1-organization/DSU-Sideloader/releases/latest).
-For testing builds, check this fork's [Actions](https://github.com/Knox-0x1-organization/DSU-Sideloader/actions) artifacts.
+## Install a GSI
 
-Release APKs are debug-signed until a release keystore is configured in GitHub Actions secrets. A debug-signed APK installs as a fresh app but cannot update an existing install. Configure `DSU_KEYSTORE_BASE64`, `DSU_KEYSTORE_PASSWORD`, and `DSU_KEY_ALIAS` (optionally `DSU_KEY_PASSWORD`) to publish updateable signed releases.
+1. Install and open DSU Sideloader.
+2. Select or create an app storage folder and grant access. The app uses it for temporary files while preparing images.
+3. Choose a supported image: `.img`, `.gz`, `.xz`, or a DSU package `.zip` (Android 11 and newer).
+4. Optionally set a userdata size. Leave the image size automatic unless you have a specific reason to change it.
+5. Start installation and follow the progress shown in the app. Use **View logs** to inspect, search, copy, or save installation activity and diagnostics.
+6. Continue according to the selected operation mode below. When Android reports that DSU is ready, boot into it from the DSU notification or from the app when supported.
 
-## How to use?
-1. Install app
-2. When opening for the first time, you need to give read/write permission to a folder, create a new folder and allow access  
-   **this folder will be used to store temporary files, like extracted GSIs from compressed files)*
-3. Select a GSI to install  
-   **accepted formats are: gz, xz, img and zip (only DSU packages)
-4. You can customize installation as you want  
-   **like changing userdata size for dynamic system*  
-   **changing gsi file size is not recommended (let app do it automatically)*
-5. Tap on "Install"
-6. Wait until finishes! (it may take a some time)
-7. Once it finishes, next step may vary:
-	- If built-in installer is enabled, no extra step is required.
-	- When built-in installer is disabled, on rooted/system/shizuku operation mode, DSU screen will appear, prompting you to confirm installation, after that, check your notifications, DSU should start installing GSI.
-	- On ADB operation mode, you will be prompted to run a command in adb, once you run, DSU screen will appear asking you to confirm installation, after that, DSU should start installing GSI.
-8. Once dynamic system is ready, you can boot it through notifications, or, if operation mode is supported, directly from our app.
-
-For more usage information, you can check [Operation modes](#operation-modes)
+Installing a GSI does not replace the normal system partition. Rebooting normally returns to the device's original system unless sticky mode has been enabled in the running DSU.
 
 ## Operation modes
 
-DSU Sideloader support multiple operation modes, they will define how our app will work, also, the operation mode is obtained automatically, and by now, is impossible to change it manually, the picked operation mode will be the best available (the priority is written below, in which, the most feature supported, is the highest number, and the most basic one is the lowest).
+The app selects the most capable mode available; the mode cannot currently be selected manually.
 
-1. ADB: Default operation mode when other modes aren't available
-- Only prepare selected image to be installed via DSU system-app
-- Requires adb command to start installation (which will invoke DSU system-app to install the prepared file)
-2. Shizuku: When running app with Shizuku (Obtained when Shizuku permission is granted)
-- Same as ADB, however, it does not require to run any adb command
-- Support tracking installation progress ¹ ² ³
-- Support installation diagnostics (if a common error is detected, it may give you useful information) ¹ ³
-3. Root: When running app with root permissions (Obtained when user grant root permission)
-- All features avaiable in Shizuku, however, does not require any special permissions
-- DynamicSystem API features (check if DSU is installed, reboot to DSU, discard..., everthing directly from app)
-- Support built-in DSU installer ⁴ ⁵
-4. System mode: When running as system-app (Obtained by installing our Magisk module)
-- All features avaiable in Shizuku
-- Fixes for some common gsi/dsu-related SELinux denials
-- Custom gsid binary (can fix some installation errors in some devices ⁵ ⁶
-5. System/Root mode: When running as system-app with granted root permission (Obtained by installing our Magisk module and granting root permission)
-- All features available in root and system operation mode
+| Mode | What it provides | What you need to do |
+| --- | --- | --- |
+| **ADB** | Prepares the image and creates the command needed to ask Android's DSU service to install it. | Run the displayed command from a computer with ADB, then confirm the installation on the device. |
+| **Shizuku** | Uses Shizuku for the DSU request and can report progress and diagnose common failures. | Install and start [Shizuku](https://shizuku.rikka.app/), then authorize DSU Sideloader. Logcat diagnostics require the applicable log access permission. |
+| **Root** | Adds DSU management actions and, where supported, the built-in installer. | Grant root access when prompted. |
+| **System** | Provides privileged DSU access and includes the optional module's policy and `gsid` changes. | Install the DSU Sideloader Magisk module. |
+| **System + Root** | Combines the system and root capabilities. | Install the module and grant root access. |
 
-¹ Requires READ_LOGS permission.
-<br>
-² Partital support on Android 10 and 11.
-<br>
-³ Android 13 requires "One-time log access".
-<br>
-⁴ Feature not supported on Android 10.
-<br>
-⁵ Experimental feature, built-in installer code is [here](https://github.com/VegaBobo/DSU-Sideloader/blob/master/app/src/main/java/vegabobo/dsusideloader/installer/root/DSUInstaller.kt).
-<br>
-⁶ Module including custom gsid binary is optional, changes made to AOSP gsid binary can be found [here](https://github.com/VegaBobo/DSU-Sideloader/tree/master/magisk-module/src/main/resources/aosp_patches).
+Some progress and diagnostic details depend on Android version and log access. The activity log still records the app's own preparation steps and built-in installer progress.
 
-#### Recomendations
+## Build with GitHub Actions
 
-- For non-rooted devices, Shizuku is a pretty nice operation mode, it support most features with no hassle, however, you need to install and setup [Shizuku](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api) app in your device.
-- For rooted devices, Root operation mode is more than ok for most people.
-- If you're having issues with DSU feature, go with System/Root.
-- Rooted devices via Magisk, should be running Magisk v24 or higher, older versions may break DSU feature.
-- We highly recommend using this app with Stock ROM, some Custom ROM builds may also work fine.
+The repository builds APKs with GitHub Actions; no local Android SDK setup is needed to download a build.
 
-## Common questions
+1. Open the repository's [Actions page](https://github.com/Knox-0x1-organization/DSU-Sideloader/actions).
+2. Select **Android CI**, then **Run workflow** to build the current `master` branch, or push a commit to start a build automatically.
+3. Open a successful run and download the `dsu-sideloader-apk` artifact.
 
-1. DSU installation finishes with no errors, but device doesn't boot into installed DSU, what should i do?
-- It is likely that AVB is preventing device from booting installed images, try flashing disabled vbmeta, check [this](https://developer.android.com/topic/generic-system-image#flash-gsi) for more info.
-2. Why isn't possible to set a high userdata value?
-- The more storage you have free, the more you can use to be your userdata, some Android versions limit the maximum allowed for allocation (this limitation is 40%, and is not our app limitation, it is a thing from Android itself, you can use our custom gsid binary, which reduces this limitation to 20%, is possible to eliminate it, but no clue if there is some implications, so, i just decided to decrease it).
-3. Why "Unmount SD" option exists?
-- If available, DSU priorizes allocation in sdcard, but allocating in sdcard is not supported in some cases (it may depends on filesystem present on sd, and if the allocation in SD is allowed by OS itself), since allocating in SD may cause installation errors in some devices, that options is here to enforce allocation in device storage.
-4. Why built-in installer requires root?
-- Because it uses Android's internal DynamicSystem API, which requires "MANAGE_DYNAMIC_SYSTEM", which is a signature protection level, the convenient way to circumvent it, is by using root. shell (2000) has "INSTALL_DYNAMIC_SYSTEM", which is able to call DSU system-app (this one has "MANAGE_DYNAMIC_SYSTEM") to install images.
-5. How about updates?
-- Our app comes with a updater, you can check updates in "About" section.
-6. Other question? problem?
-- Feel free to start a issue, for troubleshooting, don't forget to send logs (logs can be obtained on installation phase, directly on app, when operation mode support installation diagnostics).
+The build artifact includes `SHA256SUMS.txt`; verify an APK from the same downloaded artifact with `sha256sum -c SHA256SUMS.txt`.
+
+To publish a versioned release, update `versionName` in the root `build.gradle.kts`, commit the change, then create and push a matching tag (for example, `v2.05` when the version is `2.05`). The workflow requires the tag to match the app version and attaches the APK and its SHA-256 checksum to a GitHub Release. Without signing secrets the release is marked as a prerelease and contains a debug-signed APK.
+
+For updateable signed releases, configure these repository Actions secrets:
+
+| Secret | Value |
+| --- | --- |
+| `DSU_KEYSTORE_BASE64` | Base64-encoded Android signing keystore. |
+| `DSU_KEYSTORE_PASSWORD` | Keystore password. |
+| `DSU_KEY_ALIAS` | Signing key alias. |
+| `DSU_KEY_PASSWORD` | Key password; optional if it is the same as the keystore password. |
+
+Keep a secure backup of the signing keystore and passwords. Replacing or losing the signing key prevents future APKs from updating existing installations signed with that key.
+
+## Troubleshooting
+
+- **The device does not support DSU:** Confirm that the ROM exposes DSU and uses dynamic partitions. Some vendor builds disable or alter DSU support.
+- **The GSI does not boot:** Check that the image matches the device architecture and vendor interface. Verified Boot may reject an image; consult the device vendor's supported recovery instructions before changing boot verification settings.
+- **The install reports low storage:** Free device storage and try again. Android's DSU service enforces its own allocation limits.
+- **Allocation fails on removable storage:** Enable the app's SD unmount option, if available, and retry.
+- **A permission or SELinux error appears:** Open **View logs**, save the diagnostics, and include them when reporting the issue. Avoid leaving SELinux permissive after troubleshooting.
+- **The built-in installer is unavailable:** It requires root and is not supported on Android 10. Use another available operation mode.
+
+## Reporting an issue
+
+Open an [issue](https://github.com/Knox-0x1-organization/DSU-Sideloader/issues) and include:
+
+- Device model, Android version, ROM, and operation mode.
+- The image source, format, architecture, and approximate size.
+- The exact error and the saved installation log, after reviewing it for information you do not want to share.
+- Steps to reproduce the problem.
+
+Do not attach private signing keys, passwords, or other credentials.
 
 ## About DSU
-DSU (Dynamic System Updates), is a feature introduced on Android 10, that let developers boot GSIs without touching current system partition, this is done by creating new partitions to hold a GSI and a separated userdata, to boot on them when desired.
 
-Unfortunelly, DSU depends on Dynamic Partitions (your device need to support, otherwise, won't work), and most GSIs requires unlocked bootloader to get them booting properly (since only OEM-Signed GSIs are allowed to boot on locked bootloader).
+Dynamic System Updates let supported devices boot a GSI in temporary system partitions. Android provides a notification to boot the installed system; a normal reboot returns to the original system unless sticky mode is enabled. See the [Android DSU documentation](https://source.android.com/docs/core/ota/dynamic-system-updates) for platform details.
 
-GSIs can be installed via DSU without root access, using ADB, running some commands, you can read more about installation process here: https://developer.android.com/topic/dsu
+Sticky mode can be toggled from a shell while booted into the dynamic system:
 
-Once installation finishes, Android creates a persistent notification allowing you to boot into "Dynamic System" (GSI installed via DSU), and you can boot into installed GSI, without touching your system partition, or breaking the "real userdata" partition.
+```sh
+adb shell gsi_tool enable
+adb shell gsi_tool disable
+```
 
-After booting Dynamic System, you can try and test whatever you want, when you need to switch back to device's original system image, everything you need to do, is just, a simple reboot!
+## Credits and license
 
-When doing a long test, that may requires lots of reboots, this can be a pain, however, is possible to enable "sticky mode", that enforces dynamic system, instead of device's original system image, once tests are done, you can disable sticky mode and return to original system image.
-
-That is basically a quickly explanation about DSU, a amazing feature, like a "dual-boot" solution, limited, however, very safe (since no read-only partition will be modified, and if GSI does not boot, just a simple reboot will return you to the original device's system image).
-
-You can read more about DSU here: https://source.android.com/devices/tech/ota/dynamic-system-updates
-
-## How to enable Sticky Mode?
-
-Reboot to Dynamic System, and:
-- use this command on adb: `adb shell gsi_tool enable`
-- or from local adb shell:  `gsi_tool enable`
-- or from local rooted shell (eg. Termux on rooted GSI):  `su -c 'gsi_tool enable'`
-
-When sticky mode is enabled, device will always boot into dynamic system, instead of device's original system image.
-
-To disable, use the same command, instead of `enable` , use `disable`
-
-## Other
-
-For translators, we now have a Crowdin, feel free send your translations:
-<br>https://crowdin.com/translate/dsu-sideloader/<br>
-App icon made by [WSTxda](https://github.com/WSTxda)
+This project is based on [VegaBobo/DSU-Sideloader](https://github.com/VegaBobo/DSU-Sideloader). The optional module and custom `gsid` patches are in [`magisk-module`](magisk-module/). The app icon was made by [WSTxda](https://github.com/WSTxda). See [LICENSE](LICENSE) for the project license. Translations are coordinated through [Crowdin](https://crowdin.com/translate/dsu-sideloader/).
